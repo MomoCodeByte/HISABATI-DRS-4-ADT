@@ -1,0 +1,162 @@
+{
+  "numerali": {
+    "word": "numerali",
+    "definition": "Alama au tarakimu inayotumika kuwakilisha namba.",
+    "variations": [
+      "numerali"
+    ],
+    "emoji": "📘"
+  },
+  "namba za kirumi": {
+    "word": "namba za Kirumi",
+    "definition": "Mfumo wa kuandika namba kwa herufi kama I, V, X, L, C, D na M.",
+    "variations": [
+      "namba za Kirumi"
+    ],
+    "emoji": "📘"
+  },
+  "kuzidisha": {
+    "word": "kuzidisha",
+    "definition": "Kujumlisha kiasi kilekile mara kadhaa.",
+    "variations": [
+      "kuzidisha"
+    ],
+    "emoji": "📘"
+  },
+  "kigawo": {
+    "word": "kigawo",
+    "definition": "Namba inayogawanywa katika tendo la kugawanya.",
+    "variations": [
+      "kigawo"
+    ],
+    "emoji": "📘"
+  },
+  "kigawanyo": {
+    "word": "kigawanyo",
+    "definition": "Namba inayotumika kugawanya namba nyingine.",
+    "variations": [
+      "kigawanyo"
+    ],
+    "emoji": "📘"
+  },
+  "urefu": {
+    "word": "urefu",
+    "definition": "Kipimo cha umbali kutoka sehemu moja hadi nyingine.",
+    "variations": [
+      "urefu"
+    ],
+    "emoji": "📘"
+  },
+  "uzani": {
+    "word": "uzani",
+    "definition": "Kipimo kinachoonesha kitu kina uzito kiasi gani.",
+    "variations": [
+      "uzani"
+    ],
+    "emoji": "📘"
+  },
+  "ujazo": {
+    "word": "ujazo",
+    "definition": "Kiasi cha nafasi kinachochukuliwa na kitu au kimiminika.",
+    "variations": [
+      "ujazo"
+    ],
+    "emoji": "📘"
+  },
+  "mita": {
+    "word": "mita",
+    "definition": "Kizio cha msingi cha kupima urefu.",
+    "variations": [
+      "mita"
+    ],
+    "emoji": "📘"
+  },
+  "lita": {
+    "word": "lita",
+    "definition": "Kizio kinachotumika kupima ujazo wa kimiminika.",
+    "variations": [
+      "lita"
+    ],
+    "emoji": "📘"
+  },
+  "mzingo": {
+    "word": "mzingo",
+    "definition": "Jumla ya urefu wa mipaka yote ya umbo bapa.",
+    "variations": [
+      "mzingo"
+    ],
+    "emoji": "📘"
+  },
+  "eneo": {
+    "word": "eneo",
+    "definition": "Kiasi cha nafasi iliyomo ndani ya umbo bapa.",
+    "variations": [
+      "eneo"
+    ],
+    "emoji": "📘"
+  },
+  "sehemu": {
+    "word": "sehemu",
+    "definition": "Kiasi kinachoonesha sehemu ya kitu kizima.",
+    "variations": [
+      "sehemu"
+    ],
+    "emoji": "📘"
+  },
+  "kiasi": {
+    "word": "kiasi",
+    "definition": "Namba ya juu katika sehemu.",
+    "variations": [
+      "kiasi"
+    ],
+    "emoji": "📘"
+  },
+  "asili": {
+    "word": "asili",
+    "definition": "Namba ya chini katika sehemu.",
+    "variations": [
+      "asili"
+    ],
+    "emoji": "📘"
+  },
+  "desimali": {
+    "word": "desimali",
+    "definition": "Njia ya kuandika sehemu kwa kutumia nukta ya desimali.",
+    "variations": [
+      "desimali"
+    ],
+    "emoji": "📘"
+  },
+  "sekunde": {
+    "word": "sekunde",
+    "definition": "Kizio kidogo cha kupima muda.",
+    "variations": [
+      "sekunde"
+    ],
+    "emoji": "📘"
+  },
+  "dakika": {
+    "word": "dakika",
+    "definition": "Kizio cha muda chenye sekunde sitini.",
+    "variations": [
+      "dakika"
+    ],
+    "emoji": "📘"
+  },
+  "sarafu": {
+    "word": "sarafu",
+    "definition": "Fedha iliyotengenezwa kwa metali.",
+    "variations": [
+      "sarafu"
+    ],
+    "emoji": "📘"
+  },
+  "noti": {
+    "word": "noti",
+    "definition": "Fedha ya karatasi yenye thamani maalumu.",
+    "variations": [
+      "noti"
+    ],
+    "emoji": "📘"
+  }
+}

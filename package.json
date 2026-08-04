@@ -1,0 +1,9 @@
+{
+  "name": "hisabati-darasa-la-nne-adt",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "node server.mjs",
+    "preview": "node server.mjs"
+  }
+}
