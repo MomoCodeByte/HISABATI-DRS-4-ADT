@@ -130,10 +130,6 @@
     "page_number": 26
   },
   {
-    "section_id": "qz001",
-    "href": "qz001.html"
-  },
-  {
     "section_id": "pg027_sec001",
     "href": "pg027_sec001.html",
     "page_number": 27
@@ -209,10 +205,6 @@
     "page_number": 41
   },
   {
-    "section_id": "qz002",
-    "href": "qz002.html"
-  },
-  {
     "section_id": "pg042_sec001",
     "href": "pg042_sec001.html",
     "page_number": 42
@@ -276,10 +268,6 @@
     "section_id": "pg054_sec001",
     "href": "pg054_sec001.html",
     "page_number": 54
-  },
-  {
-    "section_id": "qz003",
-    "href": "qz003.html"
   },
   {
     "section_id": "pg055_sec001",
@@ -427,10 +415,6 @@
     "page_number": 83
   },
   {
-    "section_id": "qz004",
-    "href": "qz004.html"
-  },
-  {
     "section_id": "pg084_sec001",
     "href": "pg084_sec001.html",
     "page_number": 84
@@ -506,10 +490,6 @@
     "page_number": 98
   },
   {
-    "section_id": "qz005",
-    "href": "qz005.html"
-  },
-  {
     "section_id": "pg099_sec001",
     "href": "pg099_sec001.html",
     "page_number": 99
@@ -573,10 +553,6 @@
     "section_id": "pg111_sec001",
     "href": "pg111_sec001.html",
     "page_number": 111
-  },
-  {
-    "section_id": "qz006",
-    "href": "qz006.html"
   },
   {
     "section_id": "pg112_sec001",
@@ -679,10 +655,6 @@
     "page_number": 131
   },
   {
-    "section_id": "qz007",
-    "href": "qz007.html"
-  },
-  {
     "section_id": "pg132_sec001",
     "href": "pg132_sec001.html",
     "page_number": 132
@@ -778,10 +750,6 @@
     "page_number": 150
   },
   {
-    "section_id": "qz008",
-    "href": "qz008.html"
-  },
-  {
     "section_id": "pg151_sec001",
     "href": "pg151_sec001.html",
     "page_number": 151
@@ -872,10 +840,6 @@
     "page_number": 168
   },
   {
-    "section_id": "qz009",
-    "href": "qz009.html"
-  },
-  {
     "section_id": "pg169_sec001",
     "href": "pg169_sec001.html",
     "page_number": 169
@@ -954,9 +918,5 @@
     "section_id": "pg184_sec001",
     "href": "pg184_sec001.html",
     "page_number": 184
-  },
-  {
-    "section_id": "qz010",
-    "href": "qz010.html"
   }
 ]

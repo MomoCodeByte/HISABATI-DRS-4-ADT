@@ -116,3 +116,61 @@
     });
   }
 })();
+
+// Make the read-aloud Previous/Next controls seek within the current page.
+(function () {
+  'use strict';
+
+  var SEEK_SECONDS = 20;
+  var previousLabel = 'Nenda kwenye sauti iliyopita';
+  var nextLabel = 'Nenda kwenye sauti inayofuata';
+  var NativeAudio = window.Audio;
+  var audioInstances = [];
+  window.__adtAudioInstances = audioInstances;
+
+  function TrackedAudio() {
+    var audio = new (Function.prototype.bind.apply(
+      NativeAudio,
+      [null].concat(Array.prototype.slice.call(arguments))
+    ))();
+    audioInstances.push(audio);
+    return audio;
+  }
+  TrackedAudio.prototype = NativeAudio.prototype;
+  window.Audio = TrackedAudio;
+  var nativePlay = window.HTMLMediaElement.prototype.play;
+  window.HTMLMediaElement.prototype.play = function () {
+    window.__adtCurrentMedia = this;
+    return nativePlay.apply(this, arguments);
+  };
+
+  document.addEventListener('click', function (event) {
+    var button = event.target && event.target.closest
+      ? event.target.closest('button[aria-label]')
+      : null;
+    if (!button) return;
+
+    var label = button.getAttribute('aria-label');
+    var direction = label === nextLabel ? 1 : label === previousLabel ? -1 : 0;
+    if (!direction) return;
+
+    var audio = document.querySelector('audio');
+    if (!audio && window.__adtCurrentMedia) audio = window.__adtCurrentMedia;
+    if (!audio && audioInstances.length) {
+      audio = audioInstances.slice().reverse().find(function (item) {
+        return !item.paused;
+      }) || audioInstances[audioInstances.length - 1];
+    }
+    if (!audio || !Number.isFinite(audio.duration)) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.stopImmediatePropagation) event.stopImmediatePropagation();
+
+    audio.currentTime = Math.max(
+      0,
+      Math.min(audio.duration, audio.currentTime + direction * SEEK_SECONDS)
+    );
+    audio.play().catch(function () { /* the user can press Play if blocked */ });
+  }, true);
+})();
