@@ -13,7 +13,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 LOCALE = ROOT / "content" / "i18n" / "sw-TZ"
 VOICE = "sw-TZ-RehemaNeural"
-RATE = "-18%"
+RATE = "-30%"
 
 UNITS = {
     0: "sifuri", 1: "moja", 2: "mbili", 3: "tatu", 4: "nne",
@@ -50,11 +50,18 @@ def pronounce_fraction(match: re.Match[str]) -> str:
 
 
 def pronounce_roman_symbol(match: re.Match[str]) -> str:
-    letters = {
-        "I": "ahi", "V": "vii", "X": "eksi", "L": "eli",
-        "C": "sii", "D": "dii", "M": "emu",
-    }
-    return " ".join(letters[letter] for letter in match.group(0))
+    values = {"I": 1, "V": 5, "X": 10, "L": 50, "C": 100, "D": 500, "M": 1000}
+    token = match.group(0).upper()
+    total = 0
+    previous = 0
+    for letter in reversed(token):
+        current = values[letter]
+        if current < previous:
+            total -= current
+        else:
+            total += current
+            previous = current
+    return f"{number_to_swahili(total)} ya Kirumi"
 
 
 def pronounce_regular_number(match: re.Match[str]) -> str:
@@ -99,10 +106,11 @@ def spoken_text(value: str) -> str:
         flags=re.I,
     )
     roman_tokens = re.findall(r"(?<![A-Za-z])[IVXLCDM]+(?![A-Za-z])", value)
-    roman_context = bool(re.search(r"\bKirumi\b", value, re.I)) or len(roman_tokens) >= 3
+    roman_context = bool(re.search(r"\b(?:Kirumi|numerali)\b", value, re.I))
     if roman_context:
         value = re.sub(r"(?<!\d)\d{1,3}(?:,\d{3})+(?!\d)|(?<!\d)\d+(?!\d)", pronounce_regular_number, value)
-    value = re.sub(r"(?<![A-Za-z])[IVXLCDM]+(?![A-Za-z])", pronounce_roman_symbol, value)
+    if roman_context:
+        value = re.sub(r"(?<![A-Za-z])[IVXLCDM]+(?![A-Za-z])", pronounce_roman_symbol, value)
     word_pronunciations = (
         (r"\bdirector\b", "dairecta"),
         (r"\btie\b", "tai"),
@@ -126,7 +134,7 @@ def spoken_text(value: str) -> str:
 
 
 async def synthesize(data_id: str, text: str, semaphore: asyncio.Semaphore) -> tuple[str, list[dict[str, object]]]:
-    output = LOCALE / "audio" / f"{data_id}-rehema-v13.mp3"
+    output = LOCALE / "audio" / f"{data_id}-rehema-v15.mp3"
     temporary = output.with_name(f".{data_id}.{uuid.uuid4().hex}.part.mp3")
     async with semaphore:
         for attempt in range(1, 5):
@@ -161,6 +169,7 @@ async def run(
     workers: int,
     requested_ids: set[str] | None = None,
     contains: str | None = None,
+    skip_quizzes: bool = False,
 ) -> None:
     texts = json.loads((LOCALE / "texts.json").read_text(encoding="utf-8"))
     audios = json.loads((LOCALE / "audios.json").read_text(encoding="utf-8"))
@@ -169,6 +178,8 @@ async def run(
         ids = [data_id for data_id in ids if data_id in requested_ids]
     if contains is not None:
         ids = [data_id for data_id in ids if contains in texts[data_id]]
+    if skip_quizzes:
+        ids = [data_id for data_id in ids if not data_id.startswith("qz")]
     semaphore = asyncio.Semaphore(workers)
     completed = 0
     timecodes_path = LOCALE / "timecode" / "timecode_output.json"
@@ -203,9 +214,10 @@ def main() -> None:
     parser.add_argument("--workers", type=int, default=8)
     parser.add_argument("--ids", type=str)
     parser.add_argument("--contains", type=str)
+    parser.add_argument("--skip-quizzes", action="store_true")
     args = parser.parse_args()
     requested_ids = set(args.ids.split(",")) if args.ids else None
-    asyncio.run(run(args.workers, requested_ids, args.contains))
+    asyncio.run(run(args.workers, requested_ids, args.contains, args.skip_quizzes))
 
 
 if __name__ == "__main__":
