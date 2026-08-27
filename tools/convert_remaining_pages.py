@@ -55,6 +55,13 @@ def is_watermark(text: str, direction: tuple[float, float], color: int) -> bool:
     return bool(words and words <= WATERMARK_WORDS and (angled or salmon)) or "FOR ONLINE READING ONLY" in normalized
 
 
+def clean_span_text(text: str) -> str:
+    # InDesign exports list bullets as TAB + BEL on some question lines. BEL
+    # renders as an empty square and consumes width reserved for nearby math.
+    text = re.sub(r"^[\t ]*\x07[\t ]*", "", text)
+    return re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", text)
+
+
 def page_spans(page) -> list[str]:
     output: list[str] = []
     data = page.get_text("dict", flags=pymupdf.TEXTFLAGS_TEXT)
@@ -63,7 +70,7 @@ def page_spans(page) -> list[str]:
             direction = tuple(line.get("dir", (1.0, 0.0)))
             angle = math.degrees(math.atan2(-direction[1], direction[0]))
             for span in line.get("spans", []):
-                text = span.get("text", "")
+                text = clean_span_text(span.get("text", ""))
                 if not text.strip():
                     continue
                 x0, y0, x1, y1 = span["bbox"]

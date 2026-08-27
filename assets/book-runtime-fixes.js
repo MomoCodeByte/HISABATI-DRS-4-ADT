@@ -29,7 +29,11 @@
     var pageRect = page.getBoundingClientRect();
     var children = Array.prototype.filter.call(
       inner.querySelectorAll('*'),
-      function (element) { return getComputedStyle(element).display !== 'none'; }
+      function (element) {
+        return getComputedStyle(element).display !== 'none' &&
+          !element.classList.contains('page-narration-hook') &&
+          !element.classList.contains('online-watermark');
+      }
     );
     if (!children.length) return;
 
