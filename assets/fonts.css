@@ -47,9 +47,14 @@
   font-display: swap;
 }
 
-/* Apply the font globally */
+/* Match the Arial family used throughout the source book. */
 body, p, h1, h2, h3, h4, h5, h6, span, div, button, input, textarea, select {
-  font-family: "Merriweather", serif;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Page numbering belongs to the web viewer, not the printed-book content. */
+h2.pdf-page-title {
+  display: none;
 }
 
 /* Chrome UI font. FontAwesome marker classes are exempt: this ID+universal

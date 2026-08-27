@@ -1,0 +1,69 @@
+:root {
+  --pdf-source-width: 540.898;
+  --pdf-source-height: 750.661;
+  --pdf-page-scale: 1.5529669;
+}
+
+.pdf-dom-page {
+  position: relative;
+  width: 840px;
+  height: 1163px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 1%, rgba(191, 221, 177, .18), transparent 17%),
+    radial-gradient(circle at 50% 99%, rgba(191, 221, 177, .18), transparent 17%),
+    #fff;
+  color: #222;
+  font-family: Arial, sans-serif;
+}
+
+.pdf-dom-canvas {
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 540.898px;
+  height: 750.661px;
+  transform: translateX(1px) scale(1.5493);
+  transform-origin: 0 0;
+}
+
+.pdf-dom-background {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  clip-path: inset(20px 20px 24px 20px);
+  pointer-events: none;
+  user-select: none;
+}
+
+.pdf-dom-text {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.pdf-span {
+  position: absolute;
+  display: block;
+  margin: 0;
+  padding: 0;
+  line-height: 1;
+  white-space: pre;
+  transform-origin: 0 0;
+}
+
+@media (max-width: 872px) {
+  .pdf-dom-page {
+    width: calc(100vw - 32px);
+    height: calc((100vw - 32px) * 1.3845238);
+  }
+
+  .pdf-dom-canvas { transform-origin: 0 0; }
+}
+
+@media print {
+  body, main, #content { background: #fff !important; padding: 0 !important; }
+  .pdf-dom-page { box-shadow: none !important; }
+}

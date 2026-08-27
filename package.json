@@ -4,6 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "node server.mjs",
-    "preview": "node server.mjs"
+    "preview": "node server.mjs",
+    "build:html-pages": "node tools/rebuild-page-html.js",
+    "build:book-html": "node tools/rebuild-page-html.js && python tools/sync_pages_to_offline_preloader.py",
+    "audit:page-style": "node tools/page-style-audit.js"
   }
 }

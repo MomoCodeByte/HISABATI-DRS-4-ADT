@@ -1,0 +1,270 @@
+.lesson-continuation {
+  color: #242424;
+  font-family: Arial, sans-serif;
+  font-size: 19.7px;
+  line-height: 1.32;
+}
+
+.lesson-continuation .page-inner {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  padding: 120px 120px 96px;
+}
+
+.lesson-continuation p,
+.lesson-continuation h2,
+.lesson-continuation h3 {
+  margin: 0;
+}
+
+.lesson-continuation .section-title {
+  color: #00a4a8;
+  font-size: 1.04em;
+  font-weight: 700;
+  margin-bottom: .22em;
+}
+
+.lesson-continuation .lead {
+  margin-bottom: .42em;
+}
+
+.cyan-box,
+.pink-box {
+  position: relative;
+  box-sizing: border-box;
+  background: linear-gradient(180deg, #fff 82%, #f4f7f5 100%);
+}
+
+.cyan-box {
+  border: 1px solid rgba(0, 157, 170, .35);
+  border-radius: 0 1.2em 0 1.2em;
+}
+
+.pink-box {
+  border: 1px solid rgba(235, 49, 126, .34);
+  border-radius: 0 1.2em 0 1.2em;
+}
+
+.box-tab {
+  position: relative;
+  display: inline-block;
+  min-width: 10.9em;
+  margin: -1.05em 0 .55em 1.75em;
+  padding: .35em .65em .3em;
+  border: 1px solid;
+  border-radius: .85em .85em 0 0;
+  font-size: 1.02em;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.cyan-box .box-tab {
+  border-color: #00a8b1;
+  background: linear-gradient(#eefafa, #8ed2d4);
+}
+
+.pink-box .box-tab {
+  border-color: #ed287a;
+  background: linear-gradient(#fff7fb, #f2a8cb);
+}
+
+.box-body {
+  padding: 0 .65em .65em;
+}
+
+.continuation-box .box-body {
+  padding: .6em .65em .7em;
+}
+
+.method-label {
+  display: block;
+  margin: .55em 0 .2em;
+  font-weight: 700;
+}
+
+.solution-grid {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.solution-grid td {
+  border: 1px solid rgba(0, 157, 170, .27);
+  padding: .25em .34em;
+  vertical-align: top;
+}
+
+.solution-grid .equation {
+  display: block;
+  text-align: center;
+  line-height: 1.42;
+}
+
+.exercise-list {
+  margin: 0;
+  padding-left: 1.8em;
+  list-style: decimal;
+}
+
+.exercise-list > li {
+  margin: 0 0 .5em;
+  padding-left: .22em;
+}
+
+.exercise-list > li::marker {
+  color: #77b85b;
+}
+
+.choices {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: .2em 1.2em;
+  margin-top: .25em;
+}
+
+.sequence {
+  display: block;
+  margin-top: .18em;
+  line-height: 1.45;
+}
+
+.green-table,
+.pink-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.green-table th,
+.green-table td {
+  border: 1px solid rgba(103, 169, 78, .62);
+  padding: .35em .38em;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.green-table th {
+  color: #70b354;
+  font-weight: 700;
+  text-align: left;
+}
+
+.pink-table th,
+.pink-table td {
+  border: 1px solid rgba(235, 49, 126, .65);
+  padding: .24em .35em;
+  text-align: left;
+}
+
+.page-6 .online-watermark {
+  position: absolute;
+  top: 49%;
+  left: 50%;
+  width: 31em;
+  transform: translate(-50%, -50%) rotate(-48deg);
+  color: rgba(247, 120, 90, .36);
+  font-size: 2.55em;
+  font-weight: 400;
+  letter-spacing: .015em;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.page-11 .continuation-box { min-height: 13.6em; }
+.page-11 .example-two { min-height: 17.9em; margin: 3.25em 0 3em; }
+.page-11 .exercise-box { min-height: 9em; }
+
+.page-12 .exercise-box,
+.page-14 .exercise-box,
+.page-16 .exercise-box {
+  margin-left: -1.1em;
+  width: calc(100% + 2.2em);
+}
+.page-12 .exercise-box { min-height: 28.4em; padding: 1em .65em; margin-bottom: 1.7em; }
+.page-12 .section-title { margin-left: -1.1em; }
+.page-12 .lead { margin-left: -1.1em; }
+.page-12 .wide-roman-table { margin-left: -1.1em; width: calc(100% + 4em); font-size: .82em; }
+.page-12 .wide-roman-table th { width: 4.5em; }
+.page-12 .wide-roman-table td { padding: 1em .05em; }
+
+.clock-face {
+  position: relative;
+  width: 8.15em;
+  height: 8.15em;
+  margin: .65em 0 0 1em;
+  border: .42em solid #d8b565;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: inset 0 0 0 .12em #a3a3a3, 0 .08em .25em #0002;
+}
+.clock-face::before {
+  content: "";
+  position: absolute;
+  inset: .35em;
+  border-radius: 50%;
+  background: repeating-conic-gradient(#333 0 1deg, transparent 1deg 6deg);
+  -webkit-mask: radial-gradient(circle, transparent 0 84%, #000 85% 100%);
+  mask: radial-gradient(circle, transparent 0 84%, #000 85% 100%);
+}
+.clock-face .hand { position: absolute; left: 50%; top: 50%; width: 2.8em; height: .23em; transform-origin: 0 50%; background: #292929; border-radius: 1em; }
+.clock-face .minute { transform: rotate(-34deg); }
+.clock-face .hour { width: 2em; height: .4em; transform: rotate(211deg); }
+.clock-face .pin { position: absolute; left: 50%; top: 50%; width: .7em; height: .7em; transform: translate(-50%, -50%); border: .08em solid #777; border-radius: 50%; background: #ddd; }
+.clock-face .roman { position: absolute; transform: translate(-50%, -50%); font-size: .62em; }
+.clock-face .r12 { left:50%; top:12%; }.clock-face .r3 { left:88%; top:50%; }.clock-face .r6 { left:50%; top:88%; }.clock-face .r9 { left:12%; top:50%; }
+.clock-face .r1 { left:69%; top:17%; }.clock-face .r2 { left:82%; top:31%; }.clock-face .r4 { left:82%; top:69%; }.clock-face .r5 { left:69%; top:83%; }
+.clock-face .r7 { left:31%; top:83%; }.clock-face .r8 { left:18%; top:69%; }.clock-face .r10 { left:18%; top:31%; }.clock-face .r11 { left:31%; top:17%; }
+
+.page-13 .example-one { min-height: 17.9em; }
+.page-13 .example-two { min-height: 12.9em; margin: 3em 0 3.2em; }
+.page-13 .exercise-box { min-height: 6em; }
+
+.page-14 .exercise-box { min-height: 25.3em; padding: 1em .65em; margin-bottom: 1.15em; }
+.page-14 .people-table { margin: .25em 0; }
+.page-14 .section-title,
+.page-14 .section-copy { margin-left: -1.1em; }
+.page-14 .section-copy { line-height: 1.42; }
+.page-14 .example-one { min-height: 13.7em; margin-top: 2.25em; margin-left: -1.1em; width: calc(100% + 2.2em); }
+
+.page-15 .continuation-box { min-height: 6.8em; }
+.page-15 .example-two { min-height: 17.5em; margin: 3.25em 0 3em; }
+.page-15 .exercise-box { min-height: 16.4em; }
+
+.page-16 .exercise-box { min-height: 43em; padding: 1em .75em; }
+.page-16 .fill-table { width: 95%; margin: .35em auto .8em; }
+.page-16 .fill-table th { width: 31%; }
+
+.page-17 .first-table { margin-bottom: .8em; }
+.page-17 .first-table th { width: 5.45em; }
+.page-17 .first-table td { height: 2.05em; }
+.page-17 .rule-copy { line-height: 1.4; margin-bottom: .55em; text-align: justify; }
+.page-17 .second-table { margin-top: .35em; font-size: .92em; }
+.page-17 .second-table th:nth-child(1) { width: 35%; }
+.page-17 .second-table th:nth-child(2) { width: 39%; }
+.page-17 .second-table td { padding: .15em .38em; }
+
+.page-18 .example-one { min-height: 28.9em; margin-left: -1.1em; width: calc(100% + 2.2em); }
+.page-18 .worked-list { margin-top: .6em; }
+.page-18 .worked-row { display: grid; grid-template-columns: 2em 1fr; margin-bottom: .55em; }
+.page-18 .worked-row .equation { line-height: 1.45; }
+.page-18 .example-two { min-height: 13.6em; margin-top: 3.25em; margin-left: -1.1em; width: calc(100% + 2.2em); }
+
+.page-19 .continuation-box { min-height: 7.15em; }
+.page-19 .exercise-box { min-height: 20.4em; margin: 3em 0 1.85em; }
+.page-19 .section-copy { line-height: 1.43; text-align: justify; }
+.page-19 .examples-inline { margin-top: .75em; }
+
+.page-20 .top-table { margin: .4em 0 1.3em; }
+.page-20 .top-table th { width: 11.6em; }
+.page-20 .top-table td { height: 2.25em; }
+.page-20 .reference-table { margin-top: .4em; }
+.page-20 .reference-table th:nth-child(1) { width: 27%; }
+.page-20 .reference-table th:nth-child(2) { width: 48%; }
+.page-20 .reference-table td { height: 1.86em; text-align: left; }
+.page-20 .reference-table td:last-child { text-align: center; }
+
+@media (max-width: 700px) {
+  .lesson-continuation { font-size: 2.35vw; }
+}

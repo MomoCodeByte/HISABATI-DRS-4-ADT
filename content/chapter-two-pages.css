@@ -1,0 +1,65 @@
+.multiplication-page .page-inner { padding-top: 120px; }
+.multiplication-page .topic-title { color:#00a4a8; font-size:1.02em; font-weight:700; line-height:1.3; margin:0 0 .9em; }
+.multiplication-page .cyan-box { margin-bottom:2.25em; }
+.multiplication-page .pink-box { margin-bottom:1.7em; }
+.multiplication-page .box-body { padding:.2em .72em .8em; }
+.multiplication-page .steps { margin:.3em 0 0; padding-left:1.65em; list-style:decimal; }
+.multiplication-page .steps li { margin:.28em 0; padding-left:.25em; }
+.multiplication-page .steps li::marker { color:#77b85b; }
+.multiplication-page .math-line { margin:.55em 0; }
+.multiplication-page .answer { margin-top:.55em; }
+.chapter2-heading { color:#70b654; text-align:center; font-size:1.85em; font-weight:700; margin:0 0 .55em; }
+.chapter2-band { color:#fff; text-align:center; font-size:1.55em; font-weight:700; padding:.22em; margin-bottom:2.5em; border-radius:0 1em 0 1em; background:linear-gradient(#a9d88e,#5ea949); }
+.chapter2-intro { min-height:10.2em; margin-bottom:1.8em!important; }
+.think-row { min-height:4.8em; margin-bottom:1.8em; border:1px solid #7ab960; border-radius:0 1em 0 1em; background:linear-gradient(#77b85b 0 38%,#fff 38%); padding:.6em 1em .5em 6.2em; position:relative; }
+.think-row img { position:absolute; left:1.2em; bottom:0; width:4.6em; height:5.3em; object-fit:cover; object-position:top; border-radius:50%; background:#fff; }
+.think-row strong { color:#fff; display:block; margin-bottom:.65em; }
+.activity-green { border:1px solid rgba(112,180,91,.45); border-radius:0 1em 0 1em; background:linear-gradient(#fff 85%,#f0f5ed); }
+.activity-head { display:grid; grid-template-columns:1fr 1.1fr; margin-bottom:.55em; }
+.activity-head strong { padding:.35em .6em; color:#fff; background:linear-gradient(#8fca72,#5faa4d); }
+.activity-head strong:last-child { color:#70b45a; background:#fff; border:1px solid #71ad5a; border-radius:0 1em 0 0; text-align:center; }
+.activity-green .activity-body { padding:0 .55em .65em; }
+.remember-box { padding:1em 1.1em; border-radius:0 1.1em 0 1.1em; background:linear-gradient(#fceaf4,#f9e2ee); box-shadow:inset 0 -1em 1.2em #d7d7d744; }
+.remember-box h2 { color:#ec168c; font-size:1.05em; margin:0 0 .55em; }
+.remember-box ol { margin:0; padding-left:1.65em; }
+.remember-box li { margin:0 0 .65em; padding-left:.25em; }
+.remember-box li::marker { color:#ec168c; }
+.review-box { padding:1.6em .7em .7em; border-radius:0 1.1em 0 1.1em; background:linear-gradient(#f3f8f0,#edf4ea); position:relative; }
+.review-box h2 { position:absolute; top:-.85em; left:.8em; min-width:10em; padding:.3em .75em; border-radius:.8em .8em 0 0; background:linear-gradient(#f6fbf2,#bed9b2); font-size:1.02em; }
+.worked-table { width:100%; border-collapse:collapse; table-layout:fixed; margin:.5em 0; }
+.worked-table th,.worked-table td { border:1px solid #00a8b1; padding:.3em .45em; vertical-align:top; }
+.worked-table th:first-child,.worked-table td:first-child { width:20%; }
+.vertical-sum { display:inline-block; min-width:4.5em; font-family:Arial,sans-serif; line-height:1.25; text-align:right; white-space:pre-line; }
+.vertical-sum .rule { display:block; border-top:1px solid #222; margin-top:.1em; }
+.exercise-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1.55em 2.1em; padding:.4em .75em .8em; }
+.exercise-grid .item { display:grid; grid-template-columns:2em 1fr; align-items:start; min-height:2.2em; }
+.exercise-grid .n { color:#75b65d; }
+.exercise-grid .stack { display:inline-block; text-align:right; min-width:4em; line-height:1.3; }
+.exercise-grid .stack::after { content:""; display:block; border-top:1px solid #222; margin-top:.1em; height:1.15em; border-bottom:1px solid #222; }
+.lattice { display:grid; position:relative; margin:.6em auto; width:max-content; grid-auto-rows:2.55em; }
+.lattice.cols-4 { grid-template-columns:repeat(4,4.5em); }
+.lattice.cols-3 { grid-template-columns:repeat(3,4.5em); }
+.lattice .cell { border:1px solid #333; background:linear-gradient(to bottom right,transparent 49%,#333 50%,transparent 51%); position:relative; }
+.lattice .cell b:first-child { position:absolute; right:.35em; top:.15em; }
+.lattice .cell b:last-child { position:absolute; left:.35em; bottom:.1em; }
+.word-copy { text-align:justify; line-height:1.43; }
+.page-21 .example-one { min-height:12.8em; }.page-21 .example-two { min-height:10.6em; }.page-21 .exercise-box { min-height:17.2em; }
+.page-22 .green-table { margin:.35em 0 1.35em; }.page-22 .example-one { min-height:7.2em; margin-top:3em; }
+.page-23 .continuation-box { min-height:9.8em; }.page-23 .example-two { min-height:29.2em; margin-top:3.7em; }
+.page-24 .activity-green { min-height:9.1em; margin-bottom:1.9em; }.page-24 .exercise-box { min-height:28em; }
+.page-25 .remember-box { min-height:35.5em; }
+.page-26 .review-box { min-height:42.5em; }
+.page-27 .page-inner { padding-top:112px; }.page-27 .activity-green { min-height:16.8em; }
+.page-28 .cyan-box { min-height:16.2em; margin-bottom:3.5em; }
+.page-29 .exercise-box { min-height:27.8em; }.page-29 .topic-title { margin-top:2em; }.page-29 .example-one { min-height:6.6em; }
+.page-30 .continuation-box { min-height:17.3em; margin-bottom:3em; }.page-30 .example-two { min-height:25.8em; }
+.page-31 .example-three { min-height:38.5em; }
+.page-32 .exercise-box { min-height:42.5em; }
+.page-33 .example-one { min-height:21.2em; }.page-33 .example-two { min-height:17.4em; }
+.page-34 .example-three { min-height:18.7em; }.page-34 .exercise-box { min-height:20.9em; }
+.page-35 .example-one { min-height:41.8em; }
+.page-36 .lattice-intro { padding:0 1.1em 1em; margin-bottom:2.7em; border:1px solid #00a8b144; }.page-36 .example-two { min-height:31.5em; }
+.page-37 .example-three { min-height:16.2em; }.page-37 .example-four { min-height:16.4em; }.page-37 .exercise-box { min-height:7em; }
+.page-38 .exercise-continuation { min-height:24.2em; margin-bottom:1.7em; border:1px solid #ed287a33; padding:.5em; }.page-38 .word-example { min-height:15em; }
+.page-39 .word-example { min-height:22.2em; }.page-39 .exercise-box { min-height:20.6em; }
+.page-40 .exercise-continuation { min-height:18em; margin-bottom:1.45em; border:1px solid #ed287a22; padding:.5em; }.page-40 .activity-green { min-height:9em; margin-bottom:1.8em; }.page-40 .remember-box { min-height:12em; }

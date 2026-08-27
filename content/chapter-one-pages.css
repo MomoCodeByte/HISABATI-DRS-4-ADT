@@ -1,0 +1,455 @@
+:root {
+  --lesson-green: #70b45b;
+  --lesson-teal: #00a9b5;
+  --lesson-pink: #e43b84;
+  --lesson-grid: #82bd70;
+  --lesson-ink: #242424;
+}
+
+.chapter-page {
+  color: var(--lesson-ink);
+  font-size: 1.1em;
+  line-height: 1.28;
+}
+
+.chapter-page h1,
+.chapter-page h2,
+.chapter-page h3,
+.chapter-page p {
+  margin-top: 0;
+}
+
+.chapter-heading {
+  margin: 0 0 1.14em;
+  color: var(--lesson-green);
+  font-size: 2em;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+}
+
+.chapter-band {
+  margin-bottom: 0.55em;
+  padding: 0.4em 0.7em 0.35em;
+  border-radius: 0.8em 0.8em 0 0.8em;
+  background: linear-gradient(#93c77f 0%, #72b25e 34%, #68a955 100%);
+  box-shadow: inset 0 0.38em 0.45em rgba(255, 255, 255, 0.32);
+  color: #fff;
+  font-size: 1.8em;
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+}
+
+.lesson-panel {
+  position: relative;
+  border: 1px solid rgba(0, 169, 181, 0.55);
+  border-radius: 1.1em 1.1em 0 1.1em;
+  background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(236,246,244,0.84));
+}
+
+.lesson-panel-label {
+  display: inline-block;
+  min-width: 9em;
+  margin: -0.78em 0 0 1.6em;
+  padding: 0.3em 0.8em 0.24em;
+  border: 1px solid #00a9b5;
+  border-radius: 0.8em 0.8em 0 0.8em;
+  background: linear-gradient(#eef6f5 0%, #bbd8d2 46%, #79b6ad 100%);
+  color: #222;
+  font-size: 1.05em;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.lesson-section-title {
+  margin: 0 0 0.28em;
+  color: var(--lesson-teal);
+  font-size: 1.08em;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.lesson-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.lesson-table th,
+.lesson-table td {
+  border: 1px solid var(--lesson-grid);
+  padding: 0.32em 0.55em;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.lesson-table th {
+  color: var(--lesson-green);
+  font-weight: 700;
+  text-align: left;
+}
+
+.page-6 .page-inner {
+  padding: 0;
+}
+
+.page-7 .page-inner {
+  padding: 14% 14.3% 5%;
+}
+
+.page-7 .intro-panel {
+  margin: 0 0 0.9em;
+  min-height: 14.2em;
+  padding: 1.7em 0.6em 0.7em;
+}
+
+.page-7 .intro-panel .lesson-panel-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  min-width: 9.5em;
+  margin: -0.72em 0 0 1.7em;
+  border-color: #00a9b5;
+  background: linear-gradient(#29c2ca, #00a6b2 58%, #008d9a);
+  color: #fff;
+  text-align: center;
+}
+
+.page-7 .intro-panel p {
+  margin: 0;
+  text-align: justify;
+}
+
+.think-panel {
+  position: relative;
+  display: grid;
+  grid-template-columns: 5.4em 1fr;
+  min-height: 5.32em;
+  margin: 0 0 1.25em;
+  overflow: visible;
+  border: 1px solid var(--lesson-green);
+  border-radius: 1em 1em 0 1em;
+  background: linear-gradient(180deg, #8bc476 0 36%, #f7faf4 36% 100%);
+  box-shadow: inset 0 0.35em 0.45em rgba(255,255,255,0.32);
+}
+
+.think-panel img {
+  align-self: center;
+  width: 4.2em;
+  height: 5.2em;
+  margin-left: 0.75em;
+  border: 0.16em solid #fff;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.think-copy strong {
+  display: block;
+  height: 1.72em;
+  padding-top: 0.16em;
+  color: #fff;
+}
+
+.think-copy p {
+  margin: 0;
+  padding: 0.65em 0 0;
+}
+
+.page-7 .roman-intro {
+  margin-bottom: 0.18em;
+}
+
+.page-7 .roman-copy {
+  margin: 0 0 0.35em;
+  line-height: 1.18;
+  text-align: justify;
+}
+
+.page-7 .lesson-table th:nth-child(1) { width: 36%; }
+.page-7 .lesson-table th:nth-child(2) { width: 31%; }
+.page-7 .lesson-table th:nth-child(3) { width: 33%; }
+
+.page-7 .lesson-table th {
+  height: 3.5em;
+}
+
+.page-7 .lesson-table td {
+  height: 2.35em;
+}
+
+.page-8 .page-inner {
+  padding: 14.3% 14.5% 5% 11.7%;
+  font-size: 1.12em;
+}
+
+.page-8 .continuation-table {
+  margin-bottom: 1.45em;
+}
+
+.page-8 .continuation-table td {
+  height: 1.36em;
+  padding-top: 0.24em;
+  padding-bottom: 0.24em;
+}
+
+.activity-panel {
+  min-height: 11.45em;
+  margin-bottom: 1.25em;
+  border: 1px solid rgba(112,180,91,0.4);
+  border-radius: 1em 1em 0 1em;
+  background: linear-gradient(#fff, #f1f5ef);
+  overflow: hidden;
+}
+
+.activity-heading {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  background: var(--lesson-green);
+  color: #fff;
+  font-weight: 700;
+}
+
+.activity-heading span {
+  padding: 0.28em 0.55em;
+}
+
+.activity-heading span:last-child {
+  border-radius: 0.75em 0.75em 0 0.75em;
+  background: #fff;
+  color: var(--lesson-green);
+  text-align: center;
+}
+
+.activity-panel ol {
+  list-style: decimal;
+  margin: 0;
+  padding: 0.5em 0.7em 0.5em 2em;
+}
+
+.activity-panel li {
+  margin: 0 0 0.22em;
+  padding-left: 0.15em;
+  text-align: justify;
+}
+
+.activity-panel li::marker,
+.exercise-list li::marker {
+  color: var(--lesson-green);
+}
+
+.page-8 .writing-title {
+  margin-bottom: 0.2em;
+  color: #222;
+}
+
+.page-8 p {
+  margin-bottom: 0.8em;
+}
+
+.compact-roman-table {
+  margin: 0.2em 0 0.95em;
+}
+
+.compact-roman-table th,
+.compact-roman-table td {
+  height: 2.6em;
+  padding-top: 0.48em;
+  padding-bottom: 0.48em;
+}
+
+.page-8 .compact-roman-table:last-child {
+  margin-top: 1.85em;
+}
+
+.compact-roman-table th {
+  width: 41%;
+}
+
+.page-9 .page-inner {
+  padding: 14.3% 14.3% 5%;
+  font-size: 1.12em;
+}
+
+.page-9 > .page-inner > p {
+  margin-bottom: 1.6em;
+  text-align: justify;
+}
+
+.page-9 > .page-inner > p:first-child {
+  margin-bottom: 1.25em;
+}
+
+.example-panel {
+  margin-bottom: 1.75em;
+  padding: 1.65em 0.65em 0.85em;
+}
+
+.page-9 .example-panel:not(.second-example) {
+  min-height: 17.2em;
+}
+
+.example-panel .lesson-panel-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.example-panel p {
+  margin-bottom: 0.35em;
+}
+
+.example-options {
+  display: flex;
+  gap: 2em;
+  margin-bottom: 0.35em;
+}
+
+.solution-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-top: 1px solid rgba(0,169,181,0.35);
+  border-left: 1px solid rgba(0,169,181,0.35);
+}
+
+.solution {
+  min-height: 4.75em;
+  padding: 0.25em;
+  border-right: 1px solid rgba(0,169,181,0.35);
+  border-bottom: 1px solid rgba(0,169,181,0.35);
+  text-align: center;
+}
+
+.solution .formula {
+  display: block;
+  text-align: left;
+}
+
+.page-9 .second-rule {
+  margin-top: 0.15em;
+  margin-bottom: 2.35em;
+}
+
+.page-9 .second-example {
+  margin-bottom: 0;
+  min-height: 11.6em;
+}
+
+.page-9 .second-example .solution {
+  min-height: 4.55em;
+}
+
+.page-10 .page-inner {
+  padding: 14.3% 14.5% 5% 11.7%;
+  font-size: 1.11em;
+}
+
+.exercise-panel {
+  position: relative;
+  margin-bottom: 1.6em;
+  min-height: 17.65em;
+  padding: 1.75em 0.7em 0.75em;
+  border: 1px solid rgba(228,59,132,0.5);
+  border-radius: 0 1em 0 1em;
+  background: linear-gradient(#fff, #f5f6f3);
+}
+
+.exercise-label {
+  position: absolute;
+  top: 0;
+  left: 1.8em;
+  min-width: 10.8em;
+  transform: translateY(-48%);
+  padding: 0.35em 0.7em 0.28em;
+  border: 1px solid var(--lesson-pink);
+  border-radius: 0.8em 0.8em 0 0.8em;
+  background: linear-gradient(#fce9f1, #ef9bc0 58%, #e36aa1);
+  font-weight: 700;
+}
+
+.exercise-list {
+  list-style: decimal;
+  margin: 0;
+  padding-left: 1.3em;
+}
+
+.exercise-list > li {
+  margin-bottom: 0.48em;
+  padding-left: 0.25em;
+}
+
+.exercise-mini-table {
+  margin-top: 0.25em;
+  font-size: 0.88em;
+}
+
+.exercise-mini-table th {
+  width: 39%;
+  color: #222;
+}
+
+.exercise-mini-table th,
+.exercise-mini-table td {
+  border-color: var(--lesson-pink);
+  padding: 0.18em 0.3em;
+}
+
+.page-10 .range-title {
+  margin-bottom: 0.22em;
+}
+
+.page-10 .range-intro {
+  margin-bottom: 0.25em;
+}
+
+.range-table {
+  margin-bottom: 3.5em;
+  font-size: 0.82em;
+}
+
+.range-table th {
+  width: 16.5%;
+  height: 4.35em;
+  padding: 0.45em 0.25em;
+}
+
+.range-table td {
+  height: 4.35em;
+  padding: 0.45em 0.12em;
+}
+
+.range-table tr:first-child th,
+.range-table tr:first-child td {
+  height: 6.1em;
+}
+
+.range-table tr:nth-child(2) th,
+.range-table tr:nth-child(2) td {
+  height: 5.35em;
+}
+
+.range-table tr:last-child th,
+.range-table tr:last-child td {
+  height: 6.1em;
+}
+
+.range-table .word-cell {
+  line-height: 1.16;
+}
+
+.page-10 .bottom-example {
+  margin-bottom: 0;
+  min-height: 6em;
+  padding-bottom: 1em;
+}
+
+.page-10 .bottom-example .example-options {
+  margin: 0;
+}
+
+@media (max-width: 520px) {
+  .chapter-page {
+    font-size: 1.04em;
+  }
+}
