@@ -375,9 +375,9 @@
 <ns0:g>
 <ns0:g clip-path="url(#clip_49)">
 <ns0:path transform="matrix(1,0,0,-1,0,750.661)" d="M477.816 683.599H78.255008V607.897H477.816Z" fill="#ffffff" />
-<ns0:path transform="matrix(1,0,0,-1,477.8155,67.0614)" stroke-width=".25" stroke-linecap="butt" stroke-miterlimit="1" stroke-linejoin="miter" fill="none" stroke="#009ca6" d="M0 0V-75.703H-399.56V0" />
-<ns0:path transform="matrix(1,0,0,-1,477.253,67.0614)" stroke-width=".25" stroke-linecap="butt" stroke-miterlimit="1" stroke-linejoin="miter" fill="none" stroke="#009ca6" d="M0 0H1.125" />
-<ns0:path transform="matrix(1,0,0,-1,77.6929,67.0614)" stroke-width=".25" stroke-linecap="butt" stroke-miterlimit="1" stroke-linejoin="miter" fill="none" stroke="#009ca6" d="M0 0H1.125" />
+<ns0:path transform="matrix(1,0,0,-1,477.8155,67.0614)" stroke-width=".25" stroke-linecap="butt" stroke-miterlimit="1" stroke-linejoin="miter" fill="none" stroke="none" d="M0 0V-75.703H-399.56V0" />
+<ns0:path transform="matrix(1,0,0,-1,477.253,67.0614)" stroke-width=".25" stroke-linecap="butt" stroke-miterlimit="1" stroke-linejoin="miter" fill="none" stroke="none" d="M0 0H1.125" />
+<ns0:path transform="matrix(1,0,0,-1,77.6929,67.0614)" stroke-width=".25" stroke-linecap="butt" stroke-miterlimit="1" stroke-linejoin="miter" fill="none" stroke="none" d="M0 0H1.125" />
 <ns0:g mask="url(#mask_50)">
 <ns0:g style="mix-blend-mode:screen">
 <ns0:path transform="matrix(1,0,0,-1,0,750.661)" d="M66.35 600.606H477.11003V685.206H66.35Z" fill="#ffffff" fill-opacity=".75" />

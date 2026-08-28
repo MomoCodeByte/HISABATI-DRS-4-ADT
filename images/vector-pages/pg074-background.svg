@@ -367,7 +367,7 @@
 <ns0:g>
 <ns0:g clip-path="url(#clip_30)">
 <ns0:path transform="matrix(1,0,0,-1,476.8433,685.9612)" d="M0 0H-387.695C-397.083 0-404.695 7.611-404.695 17V258.441H-17C-7.611 258.441 0 250.83 0 241.44Z" fill="#ffffff" />
-<ns0:path transform="matrix(1,0,0,-1,72.1486,427.5206)" stroke-width=".25" stroke-linecap="butt" stroke-miterlimit="1" stroke-linejoin="miter" fill="none" stroke="#009ca6" d="M0 0V-241.441C0-250.83 7.611-258.441 17-258.441H404.695V-17C404.695-7.611 397.084 0 387.695 0H0Z" />
+<ns0:path transform="matrix(1,0,0,-1,72.1486,427.5206)" stroke-width=".25" stroke-linecap="butt" stroke-miterlimit="1" stroke-linejoin="miter" fill="none" stroke="none" d="M0 0V-241.441C0-250.83 7.611-258.441 17-258.441H404.695V-17C404.695-7.611 397.084 0 387.695 0H0Z" />
 <ns0:g mask="url(#mask_31)">
 <ns0:g style="mix-blend-mode:screen">
 <ns0:path transform="matrix(1,0,0,-1,0,767.669)" d="M60.478 347.166H478.438V83.28598H60.478Z" fill="#ffffff" fill-opacity=".75" />
@@ -385,7 +385,7 @@
 <ns0:g>
 <ns0:g clip-path="url(#clip_39)">
 <ns0:path transform="matrix(1,0,0,-1,95.4199,415.1394)" d="M0 0V-16.6C0-23.227 5.373-28.6 12-28.6H139.568V-12C139.568-5.373 134.196 0 127.568 0Z" fill="#aad9dd" />
-<ns0:path transform="matrix(1,0,0,-1,95.4199,415.1394)" stroke-width="1" stroke-linecap="butt" stroke-miterlimit="1" stroke-linejoin="miter" fill="none" stroke="#009ca6" d="M0 0V-16.6C0-23.227 5.373-28.6 12-28.6H139.568V-12C139.568-5.373 134.196 0 127.568 0H0Z" />
+<ns0:path transform="matrix(1,0,0,-1,95.4199,415.1394)" stroke-width="1" stroke-linecap="butt" stroke-miterlimit="1" stroke-linejoin="miter" fill="none" stroke="none" d="M0 0V-16.6C0-23.227 5.373-28.6 12-28.6H139.568V-12C139.568-5.373 134.196 0 127.568 0H0Z" />
 <ns0:g mask="url(#mask_40)">
 <ns0:g style="mix-blend-mode:screen">
 <ns0:path transform="matrix(1,0,0,-1,0,767.669)" d="M83.675 357.93H237.035V322.28999H83.675Z" fill="#ffffff" fill-opacity=".75" />
@@ -405,9 +405,9 @@
 <ns0:g>
 <ns0:g clip-path="url(#clip_49)">
 <ns0:path transform="matrix(1,0,0,-1,0,767.669)" d="M480.902 697.625H68.711V423.627H480.902Z" fill="#ffffff" />
-<ns0:path transform="matrix(1,0,0,-1,480.9021,70.04401)" stroke-width=".25" stroke-linecap="butt" stroke-miterlimit="1" stroke-linejoin="miter" fill="none" stroke="#009ca6" d="M0 0V-273.998H-412.191V0" />
-<ns0:path transform="matrix(1,0,0,-1,480.3396,70.04401)" stroke-width=".25" stroke-linecap="butt" stroke-miterlimit="1" stroke-linejoin="miter" fill="none" stroke="#009ca6" d="M0 0H1.125" />
-<ns0:path transform="matrix(1,0,0,-1,68.1487,70.04401)" stroke-width=".25" stroke-linecap="butt" stroke-miterlimit="1" stroke-linejoin="miter" fill="none" stroke="#009ca6" d="M0 0H1.125" />
+<ns0:path transform="matrix(1,0,0,-1,480.9021,70.04401)" stroke-width=".25" stroke-linecap="butt" stroke-miterlimit="1" stroke-linejoin="miter" fill="none" stroke="none" d="M0 0V-273.998H-412.191V0" />
+<ns0:path transform="matrix(1,0,0,-1,480.3396,70.04401)" stroke-width=".25" stroke-linecap="butt" stroke-miterlimit="1" stroke-linejoin="miter" fill="none" stroke="none" d="M0 0H1.125" />
+<ns0:path transform="matrix(1,0,0,-1,68.1487,70.04401)" stroke-width=".25" stroke-linecap="butt" stroke-miterlimit="1" stroke-linejoin="miter" fill="none" stroke="none" d="M0 0H1.125" />
 <ns0:g mask="url(#mask_50)">
 <ns0:g style="mix-blend-mode:screen">
 <ns0:path transform="matrix(1,0,0,-1,0,767.669)" d="M57.041 416.884H480.401V699.124H57.041Z" fill="#ffffff" fill-opacity=".75" />

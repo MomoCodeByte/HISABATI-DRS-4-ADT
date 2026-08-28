@@ -359,7 +359,7 @@
 <ns0:g>
 <ns0:g clip-path="url(#clip_30)">
 <ns0:path transform="matrix(1,0,0,-1,462.8302,672.84317)" d="M0 0H-382.436C-391.824 0-399.436 7.611-399.436 17V322.457H-17.001C-7.611 322.457 0 314.845 0 305.456Z" fill="#ffffff" />
-<ns0:path transform="matrix(1,0,0,-1,63.3947,350.3866)" stroke-width=".25" stroke-linecap="butt" stroke-miterlimit="1" stroke-linejoin="miter" fill="none" stroke="#009ca6" d="M0 0V-305.457C0-314.845 7.611-322.457 17-322.457H399.435V-17C399.435-7.611 391.824 0 382.435 0H0Z" />
+<ns0:path transform="matrix(1,0,0,-1,63.3947,350.3866)" stroke-width=".25" stroke-linecap="butt" stroke-miterlimit="1" stroke-linejoin="miter" fill="none" stroke="none" d="M0 0V-305.457C0-314.845 7.611-322.457 17-322.457H399.435V-17C399.435-7.611 391.824 0 382.435 0H0Z" />
 <ns0:g mask="url(#mask_31)">
 <ns0:g style="mix-blend-mode:screen">
 <ns0:path transform="matrix(1,0,0,-1,0,750.661)" d="M51.724 406.292H464.644V79.41199H51.724Z" fill="#ffffff" fill-opacity=".75" />
@@ -377,7 +377,7 @@
 <ns0:g>
 <ns0:g clip-path="url(#clip_39)">
 <ns0:path transform="matrix(1,0,0,-1,86.666,338.00553)" d="M0 0V-16.6C0-23.227 5.373-28.6 12-28.6H139.568V-12C139.568-5.373 134.196 0 127.568 0Z" fill="#aad9dd" />
-<ns0:path transform="matrix(1,0,0,-1,86.666,338.00553)" stroke-width="1" stroke-linecap="butt" stroke-miterlimit="1" stroke-linejoin="miter" fill="none" stroke="#009ca6" d="M0 0V-16.6C0-23.227 5.373-28.6 12-28.6H139.568V-12C139.568-5.373 134.196 0 127.568 0H0Z" />
+<ns0:path transform="matrix(1,0,0,-1,86.666,338.00553)" stroke-width="1" stroke-linecap="butt" stroke-miterlimit="1" stroke-linejoin="miter" fill="none" stroke="none" d="M0 0V-16.6C0-23.227 5.373-28.6 12-28.6H139.568V-12C139.568-5.373 134.196 0 127.568 0H0Z" />
 <ns0:g mask="url(#mask_40)">
 <ns0:g style="mix-blend-mode:screen">
 <ns0:path transform="matrix(1,0,0,-1,0,750.661)" d="M74.921 418.056H228.281V382.41603H74.921Z" fill="#ffffff" fill-opacity=".75" />
@@ -440,13 +440,13 @@
 <ns0:path transform="matrix(.2469618,0,0,.24807,112.19547,445.75617)" stroke-width="2.404" stroke-linecap="square" stroke-miterlimit="10" stroke-linejoin="miter" fill="none" stroke="#000000" d="M0 0H318.875" />
 <ns0:g clip-path="url(#clip_62)">
 </ns0:g>
-<ns0:path transform="matrix(1,0,0,-1,73.441,455.60313)" stroke-width=".5" stroke-linecap="butt" stroke-miterlimit="10" stroke-linejoin="miter" fill="none" stroke="#009ca6" d="M0 0H285.827" />
-<ns0:path transform="matrix(1,0,0,-1,73.691,638.8841)" stroke-width=".5" stroke-linecap="butt" stroke-miterlimit="10" stroke-linejoin="miter" fill="none" stroke="#009ca6" d="M0 0V183.031" />
-<ns0:path transform="matrix(1,0,0,-1,359.2677,455.60313)" stroke-width=".5" stroke-linecap="butt" stroke-miterlimit="10" stroke-linejoin="miter" fill="none" stroke="#009ca6" d="M0 0H101.102" />
-<ns0:path transform="matrix(1,0,0,-1,359.2677,638.8841)" stroke-width=".5" stroke-linecap="butt" stroke-miterlimit="10" stroke-linejoin="miter" fill="none" stroke="#009ca6" d="M0 0V183.031" />
-<ns0:path transform="matrix(1,0,0,-1,460.1201,638.8841)" stroke-width=".5" stroke-linecap="butt" stroke-miterlimit="10" stroke-linejoin="miter" fill="none" stroke="#009ca6" d="M0 0V183.031" />
-<ns0:path transform="matrix(1,0,0,-1,73.441,639.1341)" stroke-width=".5" stroke-linecap="butt" stroke-miterlimit="10" stroke-linejoin="miter" fill="none" stroke="#009ca6" d="M0 0H285.827" />
-<ns0:path transform="matrix(1,0,0,-1,359.2677,639.1341)" stroke-width=".5" stroke-linecap="butt" stroke-miterlimit="10" stroke-linejoin="miter" fill="none" stroke="#009ca6" d="M0 0H101.102" />
+<ns0:path transform="matrix(1,0,0,-1,73.441,455.60313)" stroke-width=".5" stroke-linecap="butt" stroke-miterlimit="10" stroke-linejoin="miter" fill="none" stroke="none" d="M0 0H285.827" />
+<ns0:path transform="matrix(1,0,0,-1,73.691,638.8841)" stroke-width=".5" stroke-linecap="butt" stroke-miterlimit="10" stroke-linejoin="miter" fill="none" stroke="none" d="M0 0V183.031" />
+<ns0:path transform="matrix(1,0,0,-1,359.2677,455.60313)" stroke-width=".5" stroke-linecap="butt" stroke-miterlimit="10" stroke-linejoin="miter" fill="none" stroke="none" d="M0 0H101.102" />
+<ns0:path transform="matrix(1,0,0,-1,359.2677,638.8841)" stroke-width=".5" stroke-linecap="butt" stroke-miterlimit="10" stroke-linejoin="miter" fill="none" stroke="none" d="M0 0V183.031" />
+<ns0:path transform="matrix(1,0,0,-1,460.1201,638.8841)" stroke-width=".5" stroke-linecap="butt" stroke-miterlimit="10" stroke-linejoin="miter" fill="none" stroke="none" d="M0 0V183.031" />
+<ns0:path transform="matrix(1,0,0,-1,73.441,639.1341)" stroke-width=".5" stroke-linecap="butt" stroke-miterlimit="10" stroke-linejoin="miter" fill="none" stroke="none" d="M0 0H285.827" />
+<ns0:path transform="matrix(1,0,0,-1,359.2677,639.1341)" stroke-width=".5" stroke-linecap="butt" stroke-miterlimit="10" stroke-linejoin="miter" fill="none" stroke="none" d="M0 0H101.102" />
 <ns0:path transform="matrix(.2471006,0,0,.2481966,366.66886,534.2737)" stroke-width="2.784" stroke-linecap="square" stroke-miterlimit="10" stroke-linejoin="miter" fill="none" stroke="#000000" d="M0 0H296.984" />
 <ns0:path transform="matrix(.2471006,0,0,.2481966,366.66886,555.75558)" stroke-width="2.784" stroke-linecap="square" stroke-miterlimit="10" stroke-linejoin="miter" fill="none" stroke="#000000" d="M0 0H296.225" />
 <ns0:g clip-path="url(#clip_63)">

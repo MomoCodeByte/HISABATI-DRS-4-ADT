@@ -9,10 +9,7 @@
   width: 840px;
   height: 1163px;
   overflow: hidden;
-  background:
-    radial-gradient(circle at 50% 1%, rgba(191, 221, 177, .18), transparent 17%),
-    radial-gradient(circle at 50% 99%, rgba(191, 221, 177, .18), transparent 17%),
-    #fff;
+  background: #fff;
   color: #222;
   font-family: Arial, sans-serif;
 }
@@ -33,7 +30,7 @@
   width: 100%;
   height: 100%;
   object-fit: fill;
-  clip-path: inset(20px 20px 24px 20px);
+  clip-path: inset(36px 24px 30px 24px);
   pointer-events: none;
   user-select: none;
 }
@@ -66,4 +63,16 @@
 @media print {
   body, main, #content { background: #fff !important; padding: 0 !important; }
   .pdf-dom-page { box-shadow: none !important; }
+}
+/* Preserve PDF formula spacing without expanding extracted tab characters. */
+.pdf-dom-page .pdf-span {
+  white-space: pre;
+  tab-size: 1;
+  -moz-tab-size: 1;
+}
+
+/* Remove the source book's blue/green gradient frame from coordinate pages. */
+.pdf-dom-page {
+  background: #fff !important;
+  border: 0 !important;
 }
