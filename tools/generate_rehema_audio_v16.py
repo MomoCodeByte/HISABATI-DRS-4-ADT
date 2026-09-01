@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 LOCALE = ROOT / "content" / "i18n" / "sw-TZ"
 VOICE = "sw-TZ-RehemaNeural"
 RATE = "-30%"
-VERSION = "v31"
+VERSION = "v38"
 
 ONES = ("sifuri", "moja", "mbili", "tatu", "nne", "tano", "sita", "saba", "nane", "tisa")
 TENS = {10: "kumi", 20: "ishirini", 30: "thelathini", 40: "arobaini",
@@ -1292,54 +1292,62 @@ Swali be. Arobaini na moja sawa sawa na eksi eli jumlisha ai, sawa sawa na eksi 
 Njia ya swali che inaendelea.
 """,
     "pg015_gp001_tx001": """
-Mfano wa kwanza unaendelea.
-Njia.
-Swali che. Arobaini na tano sawa sawa na arobaini jumlisha tano, sawa sawa na eksi eli vi.
-Mfano wa pili. Andika namba hizi za Kirumi kwa numerali: eksi eksi eksi vi ai ai; eksi eli ai ai ai; na eksi eli ai eksi.
-Njia.
-Swali aa. Eksi eksi eksi vi ai ai sawa sawa na thelathini jumlisha saba, sawa sawa na thelathini na saba.
-Swali be. Eksi eli ai ai ai sawa sawa na arobaini jumlisha tatu, sawa sawa na arobaini na tatu.
-Swali che. Eksi eli ai eksi sawa sawa na arobaini jumlisha tisa, sawa sawa na arobaini na tisa.
-Zoezi la nne.
-Swali la kwanza. Andika namba hizi kwa namba za Kirumi: arobaini na nne, thelathini na tisa, thelathini na tano, na arobaini na sita.
-Swali la pili. Badili namba hizi za Kirumi kuwa numerali: eksi eksi eksi vi ai; eksi eli vi ai ai ai; eksi eli ai; na eksi eksi eksi ai vi.
-Swali la tatu. Jaza nafasi zilizo wazi.
-Swali aa: eksi eksi eksi ai vi, nafasi wazi, eksi eksi eksi vi ai, nafasi wazi, nafasi wazi, eksi eksi eksi ai eksi.
-Swali be: eksi eksi eksi vi ai, eksi eksi eksi vi ai ai ai, nafasi wazi, eksi eli ai ai, eksi eli ai vi, nafasi wazi, nafasi wazi, nafasi wazi.
-Swali che: eli, nafasi wazi, eksi eli ai vi, nafasi wazi, eksi eksi eksi vi ai ai ai, eksi eksi eksi ai ai.
+Mfano wa kwanza unaendelea. Njia. Swali che. Arobaini na tano sawa sawa na arobaini jumlisha tano, sawa sawa na eksi eli vi. Mfano wa pili. Andika namba hizi za Kirumi kwa numerali: eksi eksi eksi vi ai ai; eksi eli ai ai ai; na eksi eli ai eksi. Njia. Swali aa. Eksi eksi eksi vi ai ai sawa sawa na thelathini jumlisha saba, sawa sawa na thelathini na saba. Swali be. Eksi eli ai ai ai sawa sawa na arobaini jumlisha tatu, sawa sawa na arobaini na tatu. Swali che. Eksi eli ai eksi sawa sawa na arobaini jumlisha tisa, sawa sawa na arobaini na tisa. Zoezi la nne.
+Swali la kwanza. Andika namba zifuatazo kwa Kirumi.
+Aa. Arobaini na nne.
+Be. Thelathini na tisa.
+Che. Thelathini na tano.
+De. Arobaini na sita.
+Swali la pili. Andika namba zifuatazo kwa numerali.
+Aa. Eksi eksi eksi vi ai.
+Be. Eksi eli vi ai ai ai.
+Che. Eksi eli ai.
+De. Eksi eksi eksi ai vi.
+Swali la tatu. Andika namba za Kirumi zinazokosekana katika kila mfululizo ufuatao.
+Aa. Eksi eksi eksi ai vi, nafasi wazi, eksi eksi eksi vi ai, nafasi wazi, nafasi wazi, eksi eksi eksi ai eksi.
+Be. Eksi eksi eksi vi ai, eksi eksi eksi vi ai ai ai, nafasi wazi, eksi eli ai ai, eksi eli ai vi, nafasi wazi, nafasi wazi, nafasi wazi.
+Che. Eli, nafasi wazi, eksi eli ai vi, nafasi wazi, eksi eksi eksi vi ai ai ai, eksi eksi eksi ai ai.
 """,
     "pg016_gp001_tx001": """
 Zoezi la nne linaendelea.
-Swali la nne. Kamilisha jedwali. Jedwali lina safu nne za kujaza numerali na namba ya Kirumi. Safu ya kwanza ina namba ya Kirumi eksi eksi eksi vi ai, lakini numerali ni nafasi wazi. Safu ya pili ina numerali thelathini na tisa, lakini namba ya Kirumi ni nafasi wazi. Safu ya tatu ina namba ya Kirumi eksi eli ai ai ai, lakini numerali ni nafasi wazi. Safu ya nne ina numerali arobaini na sita, lakini namba ya Kirumi ni nafasi wazi.
-Swali la tano. Jaza nafasi zilizo wazi katika mipangilio.
-Swali aa: eksi eksi eksi ai ai, nafasi wazi, eksi eksi eksi vi ai, nafasi wazi, nafasi wazi.
-Swali be: eksi, nafasi wazi, eksi eksi, eksi eksi vi, nafasi wazi, nafasi wazi, eksi eli.
-Swali che: eli, nafasi wazi, nafasi wazi, nafasi wazi, eksi eksi eksi, eksi eksi vi.
-Swali de: eksi eksi eksi vi, eksi eksi eksi vi ai ai, nafasi wazi, eksi eli ai, nafasi wazi, eksi eli vi.
-Swali la sita. Panga vijiti kuonesha namba arobaini na nane, kisha andika namba yake ya Kirumi.
-Swali la saba. Alama ya barabarani ina namba ya Kirumi eksi eli ai vi. Andika namba hiyo kwa numerali.
-Swali la nane. Andika namba hizi za Kirumi kwa maneno: eksi eli ai eksi; eksi eksi eksi vi ai; eksi eli vi; na eksi eksi eksi vi ai ai.
-Swali la tisa. Andika namba hizi zilizoandikwa kwa maneno kwa namba za Kirumi: arobaini na mbili, thelathini na saba, thelathini na tisa, na arobaini na tatu.
-Swali la kumi. Andika namba hizi za Kirumi kwa maneno: eksi eli ai ai; eksi eksi eksi vi ai ai ai; eksi eksi eksi ai eksi; na eksi eli vi ai ai.
+Swali la nne. Jaza namba zinazokosekana katika jedwali lifuatalo.
+Mstari wa numerali. Nafasi wazi; thelathini na tisa; nafasi wazi; arobaini na sita.
+Mstari wa namba kwa Kirumi. Eksi eksi eksi vi ai; nafasi wazi; eksi eli ai ai ai; nafasi wazi.
+Swali la tano. Jaza namba zinazokosekana katika kila mpangilio.
+Aa. Eksi eksi eksi ai ai, nafasi wazi, eksi eksi eksi vi ai, nafasi wazi, nafasi wazi.
+Be. Eksi, nafasi wazi, eksi eksi, eksi eksi vi, nafasi wazi, nafasi wazi, eksi eli.
+Che. Eli, nafasi wazi, nafasi wazi, nafasi wazi, eksi eksi eksi, eksi eksi vi.
+De. Eksi eksi eksi vi, eksi eksi eksi vi ai ai, nafasi wazi, eksi eli ai, nafasi wazi, eksi eli vi.
+Swali la sita. Panga vijiti kuonesha arobaini na nane inavyoandikwa kwa Kirumi, kisha andika namba hii.
+Swali la saba. Nuru aliona bango limeandikwa namba eksi eli ai vi. Hiyo ni namba gani kwa numerali?
+Swali la nane. Andika namba zifuatazo kwa maneno.
+Aa. Eksi eli ai eksi.
+Be. Eksi eksi eksi vi ai.
+Che. Eksi eli vi.
+De. Eksi eksi eksi vi ai ai.
+Swali la tisa. Badili namba zifuatazo kuwa namba za Kirumi.
+Aa. Arobaini na mbili.
+Be. Thelathini na saba.
+Che. Thelathini na tisa.
+De. Arobaini na tatu.
+Swali la kumi. Andika namba zifuatazo kwa maneno.
+Aa. Eksi eli ai ai.
+Be. Eksi eksi eksi vi ai ai ai.
+Che. Eksi eksi eksi ai eksi.
+De. Eksi eli vi ai ai.
 """,
     "pg017_gp001_tx001": """
-Namba za Kirumi hamsini hadi mia moja.
-Jedwali la kwanza lina safu tatu: numerali, namba ya Kirumi, na namba kwa maneno.
-Hamsini ni eli. Sitini ni eli eksi. Sabini ni eli eksi eksi. Themanini ni eli eksi eksi eksi. Tisini ni eksi si. Mia moja ni si.
-Alama ai, eksi, na si zinaweza kutumika kutoa au kujumlisha. Samani zake ni moja, kumi, na mia moja.
-Alama ai ikiwekwa kushoto mwa vi au eksi, samani ya ai hutolewa. Mfano, ai vi ni nne, na ai eksi ni tisa.
-Alama eksi ikiwekwa kushoto mwa eli au si, samani ya eksi hutolewa. Mfano, eksi eli ni arobaini, na eksi si ni tisini.
-Jedwali la pili lina mifano kumi ya namba za Kirumi na numerali zake.
-Eli vi ni hamsini na tano.
-Eli ai eksi ni hamsini na tisa.
-Eli eksi eksi eksi ai eksi ni themanini na tisa.
-Eli eksi eksi ai ai ni sabini na mbili.
-Eksi si ai eksi ni tisini na tisa.
-Eli eksi ai vi ni sitini na nne.
-Eli vi ai ai ai ni hamsini na nane.
-Eli eksi ai ni sitini na moja.
-Eli eksi eksi ai ai ai ni sabini na tatu.
-Eli eksi eksi eksi vi ni themanini na tano.
+Namba za Kirumi eli hadi si. Soma namba zifuatazo. Jedwali linaonesha numerali, namba za Kirumi, na namba kwa maneno. Numerali hamsini. Namba ya Kirumi eli. Namba kwa maneno, hamsini. Numerali sitini. Namba ya Kirumi eli eksi. Namba kwa maneno, sitini. Numerali sabini. Namba ya Kirumi eli eksi eksi. Namba kwa maneno, sabini. Numerali themanini. Namba ya Kirumi eli eksi eksi eksi. Namba kwa maneno, themanini. Numerali tisini. Namba ya Kirumi eksi si. Namba kwa maneno, tisini. Numerali mia moja. Namba ya Kirumi si. Namba kwa maneno, mia moja. Namba ai, eksi na si ni namba pekee za Kirumi ambazo zikiandikwa kushoto kwa namba yenye samani kubwa, hupunguzwa na zikiandikwa kulia, huongezwa. Namba hizi haziwezi kujirudia zikiandikwa kushoto kwa namba kubwa. Pia, namba hizi haziwezi kujirudia zaidi ya mara tatu kwa mfululizo zikiandikwa kulia kwa namba kubwa. Namba hizi kwa numerali ni moja, kumi na mia moja. Namba ai vi na ai eksi zinawakilisha mamoja. Kwa hiyo, namba hizi zikiandikwa mbele ya namba zenye samani kubwa hujumlishwa. Soma namba katika jedwali lifuatalo.
+Namba kwa Kirumi ni eli vi. Namba hiyo kwa maneno ni hamsini na tano. Kwa numerali ni hamsini na tano.
+Namba kwa Kirumi ni eli ai eksi. Namba hiyo kwa maneno ni hamsini na tisa. Kwa numerali ni hamsini na tisa.
+Namba kwa Kirumi ni eli eksi eksi eksi ai eksi. Namba hiyo kwa maneno ni themanini na tisa. Kwa numerali ni themanini na tisa.
+Namba kwa Kirumi ni eli eksi eksi ai ai. Namba hiyo kwa maneno ni sabini na mbili. Kwa numerali ni sabini na mbili.
+Namba kwa Kirumi ni eksi si ai eksi. Namba hiyo kwa maneno ni tisini na tisa. Kwa numerali ni tisini na tisa.
+Namba kwa Kirumi ni eli eksi ai vi. Namba hiyo kwa maneno ni sitini na nne. Kwa numerali ni sitini na nne.
+Namba kwa Kirumi ni eli vi ai ai ai. Namba hiyo kwa maneno ni hamsini na nane. Kwa numerali ni hamsini na nane.
+Namba kwa Kirumi ni eli eksi ai. Namba hiyo kwa maneno ni sitini na moja. Kwa numerali ni sitini na moja.
+Namba kwa Kirumi ni eli eksi eksi ai ai ai. Namba hiyo kwa maneno ni sabini na tatu. Kwa numerali ni sabini na tatu.
+Namba kwa Kirumi ni eli eksi eksi eksi vi. Namba hiyo kwa maneno ni themanini na tano. Kwa numerali ni themanini na tano.
 """,
     "pg018_gp001_tx001": """
 Mfano wa kwanza. Andika namba hizi za Kirumi kwa maneno: eli eksi vi; eli eksi eksi vi ai; eksi si ai eksi; na eli ai vi.
