@@ -251,7 +251,7 @@
 <ns0:g mask="url(#mask_28)">
 <ns0:g>
 <ns0:g clip-path="url(#clip_30)">
-<ns0:path transform="matrix(1,0,0,-1,485.632,80.52673)" d="M0 0H-399.435V-600.946H-17.001C-7.612-600.946 0-593.334 0-583.945Z" fill="#eef4eb" />
+<ns0:path transform="matrix(1,0,0,-1,491.632,80.52673)" d="M0 0H-405.435V-600.946H-17.001C-7.612-600.946 0-593.334 0-583.945Z" fill="#eef4eb" />
 <ns0:g mask="url(#mask_31)">
 <ns0:g style="mix-blend-mode:screen">
 <ns0:path transform="matrix(1,0,0,-1,0,767.669)" d="M74.527 79.18H487.087V688.3H74.527Z" fill="#ffffff" fill-opacity=".75" />
