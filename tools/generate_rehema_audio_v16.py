@@ -4,6 +4,7 @@ import argparse
 import asyncio
 from dataclasses import dataclass
 import html
+from html.parser import HTMLParser
 import json
 import re
 import sys
@@ -14,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 LOCALE = ROOT / "content" / "i18n" / "sw-TZ"
 VOICE = "sw-TZ-RehemaNeural"
 RATE = "-30%"
-VERSION = "v16"
+VERSION = "v31"
 
 ONES = ("sifuri", "moja", "mbili", "tatu", "nne", "tano", "sita", "saba", "nane", "tisa")
 TENS = {10: "kumi", 20: "ishirini", 30: "thelathini", 40: "arobaini",
@@ -29,6 +30,91 @@ UNITS = {"mm": "milimeta", "sm": "sentimeta", "dm": "desimeta", "km": "kilometa"
          "kg": "kilogramu", "mg": "miligramu", "ml": "mililita", "m": "meta",
          "g": "gramu", "l": "lita", "t": "tani", "sh": "shilingi", "st": "senti"}
 SPAN_RE = re.compile(r'<span class="pdf-span" style="(?P<style>[^"]*)">(?P<text>.*?)</span>', re.S)
+
+ROMAN_READING_ORDER_IDS = {
+    "pg013_gp001_tx001",
+    "pg015_gp001_tx001",
+    "pg018_gp001_tx001",
+    "pg021_gp001_tx001",
+    "pg023_gp001_tx001",
+}
+
+BLOCK_TAGS = {
+    "address", "article", "aside", "blockquote", "br", "caption", "dd", "div",
+    "dl", "dt", "figcaption", "figure", "footer", "h1", "h2", "h3", "h4",
+    "h5", "h6", "header", "li", "main", "p", "section", "td", "th", "tr",
+}
+
+
+class SemanticNarrationParser(HTMLParser):
+    """Extract readable page content while preserving its semantic order."""
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.parts: list[str] = []
+        self.page_depth = 0
+        self.skip_depth = 0
+        self.list_counters: list[int] = []
+
+    @staticmethod
+    def _classes(attrs: list[tuple[str, str | None]]) -> set[str]:
+        value = next((value for key, value in attrs if key == "class"), "") or ""
+        return set(value.split())
+
+    def _separator(self) -> None:
+        if self.parts and self.parts[-1] != ". ":
+            self.parts.append(". ")
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        classes = self._classes(attrs)
+        if self.page_depth == 0 and "page-inner" in classes:
+            self.page_depth = 1
+            return
+        if self.page_depth == 0:
+            return
+        self.page_depth += 1
+        if self.skip_depth:
+            self.skip_depth += 1
+            return
+        if "page-narration-hook" in classes or tag in {"script", "style", "noscript"}:
+            self.skip_depth = 1
+            return
+        if tag == "ol":
+            self.list_counters.append(0)
+        elif tag == "li" and self.list_counters:
+            self.list_counters[-1] += 1
+            self._separator()
+            self.parts.append(f"Swali namba {self.list_counters[-1]}. ")
+        elif tag == "img":
+            alt = next((value for key, value in attrs if key == "alt"), "") or ""
+            if alt.strip():
+                self._separator()
+                self.parts.append(alt.strip())
+                self._separator()
+        elif tag in BLOCK_TAGS:
+            self._separator()
+
+    def handle_endtag(self, tag: str) -> None:
+        if self.page_depth == 0:
+            return
+        if self.skip_depth:
+            self.skip_depth -= 1
+        elif tag == "ol" and self.list_counters:
+            self.list_counters.pop()
+            self._separator()
+        elif tag in BLOCK_TAGS:
+            self._separator()
+        self.page_depth -= 1
+
+    def handle_data(self, data: str) -> None:
+        if self.page_depth and not self.skip_depth and data.strip():
+            self.parts.append(data.strip() + " ")
+
+    def text(self) -> str:
+        value = "".join(self.parts)
+        value = re.sub(r"\s+([,.;:!?])", r"\1", value)
+        value = re.sub(r"(?:\.\s*){2,}", ". ", value)
+        return re.sub(r"\s+", " ", value).strip(". ")
 
 
 @dataclass
@@ -225,6 +311,22 @@ def page_source(data_id: str) -> str | None:
     return ". ".join(result)
 
 
+def semantic_html_source(data_id: str) -> str | None:
+    match = re.fullmatch(r"pg(\d{3})_gp001_tx001", data_id)
+    if not match:
+        return None
+    page_number = int(match.group(1))
+    page = ROOT / ("index.html" if page_number == 1 else f"pg{page_number:03d}_sec001.html")
+    if not page.exists():
+        return None
+    source = page.read_text(encoding="utf-8")
+    if 'class="book-page pdf-dom-page"' in source:
+        return None
+    parser = SemanticNarrationParser()
+    parser.feed(source)
+    return parser.text() or None
+
+
 def spell(match: re.Match[str]) -> str:
     return " ".join(LETTERS.get(char, char) for char in match.group(0).upper())
 
@@ -237,22 +339,395 @@ def add_pauses(value: str) -> str:
     ordinal = (r"kwanza|pili|tatu|nne|tano|sita|saba|nane|tisa|kumi|"
                r"kumi na moja|kumi na mbili|kumi na tatu|kumi na nne|kumi na tano|\d+")
     for label in ("Mfano wa", "Zoezi la"):
-        value = re.sub(rf"\b({label}\s+(?:{ordinal}))\b[.:]?", r". \1. ", value, flags=re.I)
-    value = re.sub(rf"\b(Kazi ya kufanya(?: ya (?:{ordinal}))?)\b[.:]?", r". \1. ", value, flags=re.I)
-    for marker in ("Utangulizi", "Njia", "Hatua", "Zingatia", "Fikiri"):
-        value = re.sub(rf"\b{marker}\b[.:]?", ". " + marker + ". ", value, flags=re.I)
+        value = re.sub(
+            rf"(^|(?<=[.!?])\s+)({label}\s+(?:{ordinal}))\b[.:]?",
+            lambda match: (match.group(1) or "") + match.group(2) + ". ",
+            value,
+            flags=re.I,
+        )
+    value = re.sub(
+        rf"(^|(?<=[.!?])\s+)(Kazi ya kufanya(?: ya (?:{ordinal}))?)\b[.:]?",
+        lambda match: (match.group(1) or "") + match.group(2) + ". ",
+        value,
+        flags=re.I,
+    )
+    for marker in ("Utangulizi", "Njia", "Hatua", "Zingatia"):
+        value = re.sub(
+            rf"(^|(?<=[.!?])\s+){marker}\b[.,:]?",
+            lambda match: (match.group(1) or "") + marker + ". ",
+            value,
+            flags=re.I,
+        )
     value = re.sub(r"\bKwa hiyo\b[,:]?", ". Kwa hiyo, ", value, flags=re.I)
     return re.sub(r"(?:\.\s*){2,}", ". ", value).lstrip(". ")
 
 
+ADT_ROMAN_VALUES = {"I": 1, "V": 5, "X": 10, "L": 50, "C": 100, "D": 500, "M": 1000}
+ADT_LETTER_PRONUNCIATIONS = {"A": "aa", "B": "be", "C": "che", "D": "de"}
+ADT_SPOKEN_ROMAN_TOKENS = {
+    "ai": "I", "vi": "V", "eksi": "X", "eli": "L",
+    "si": "C", "di": "D", "emu": "M",
+}
+ADT_ROMAN_SYMBOL_NAMES = {
+    "I": "i kubwa", "V": "vi kubwa", "X": "eksi kubwa", "L": "eli kubwa",
+    "C": "che kubwa", "D": "de kubwa", "M": "emu kubwa",
+}
+
+
+def adt_roman_to_int(token: str) -> int:
+    total = 0
+    previous = 0
+    for character in reversed(token.upper()):
+        current = ADT_ROMAN_VALUES[character]
+        if current < previous:
+            total -= current
+        else:
+            total += current
+            previous = current
+    return total
+
+
+def adt_describe_roman(token: str) -> str:
+    token = token.upper()
+    groups = []
+    index = 0
+    while index < len(token):
+        end = index + 1
+        while end < len(token) and token[end] == token[index]:
+            end += 1
+        count = end - index
+        symbol_name = ADT_ROMAN_SYMBOL_NAMES[token[index]]
+        if count == 1:
+            groups.append("herufi " + symbol_name + " moja")
+        else:
+            groups.append("herufi " + symbol_name + " mara " + number_words(count))
+        index = end
+    construction = ", kisha ".join(groups)
+    return (
+        "alama ya Kirumi inayoundwa na " + construction
+        + ", yenye thamani ya " + number_words(adt_roman_to_int(token))
+    )
+
+
+def adt_spoken_roman_to_words(match: re.Match) -> str:
+    roman = "".join(ADT_SPOKEN_ROMAN_TOKENS[token.lower()] for token in match.group(0).split())
+    return adt_describe_roman(roman)
+
+
 def spoken(value: str, data_id: str = "") -> str:
     value = html.unescape(value).replace("\x07", " ").replace("�", " toa ")
+    page_match = re.match(r"pg(\d{3})_", data_id or "")
+    page_number = int(page_match.group(1)) if page_match else 0
+    for option, pronunciation in ADT_LETTER_PRONUNCIATIONS.items():
+        value = re.sub(
+            rf"\bKipengele\s+{option.lower()}\b",
+            "Kipengele " + pronunciation,
+            value,
+            flags=re.I,
+        )
+    value = re.sub(r"\bKipengele\s+si\b", "Kipengele che", value, flags=re.I)
+    value = re.sub(r"\bKipengele\s+di\b", "Kipengele de", value, flags=re.I)
+    if 7 <= page_number <= 26 and data_id not in PAGE_NARRATION_OVERRIDES:
+        value = re.sub(r"\bili\b", "kwa ajili ya", value, flags=re.I)
+        value = re.sub(
+            r"\(([IVXLCDM]+)\)",
+            lambda match: adt_describe_roman(match.group(1)),
+            value,
+        )
+        value = re.sub(
+            r"(?<![A-Za-z])(?:ai|vi|eksi|eli|si|di|emu)(?:\s+(?:ai|vi|eksi|eli|si|di|emu))*(?![A-Za-z])",
+            adt_spoken_roman_to_words,
+            value,
+            flags=re.I,
+        )
+        value = re.sub(
+            r"(?<![A-Za-z(])\b[IVXLCDM]+\b(?![A-Za-z)])",
+            lambda match: adt_describe_roman(match.group(0)),
+            value,
+        )
+    value = re.sub(
+        r"\(([a-d])\)",
+        lambda match: " " + ADT_LETTER_PRONUNCIATIONS[match.group(1).upper()] + " ",
+        value,
+        flags=re.I,
+    )
+    value = re.sub(
+        r"(?<![A-Za-z])([A-D])(?![A-Za-z])",
+        lambda match: " " + ADT_LETTER_PRONUNCIATIONS[match.group(1).upper()] + " ",
+        value,
+        flags=re.I,
+    )
+    value = value.replace("©", " atimiliki ")
+    value = re.sub(
+        r"(?<!\w)www\.tie\.go\.tz(?!\w)",
+        "dabiliyu dabiliyu dabiliyu doti tai doti goo doti tizedi",
+        value,
+        flags=re.I,
+    )
+    value = re.sub(
+        r"(?<!\w)director\.general@tie\.go\.tz(?!\w)",
+        "dairecta doti genero ati tai doti goo doti tizedi",
+        value,
+        flags=re.I,
+    )
+    value = re.sub(r"\bthamani\b", "samani", value, flags=re.I)
+    # Book-wide Tanzanian Swahili institution, title, and URL pronunciations.
+    value = re.sub(
+        r"https?://ol\.tie\.go\.tz",
+        "echititipiesi fowadi slash fowadi slash oli nukta tie nukta goo nukta Tanzania",
+        value,
+        flags=re.I,
+    )
+    value = re.sub(
+        r"\bol\.tie\.go\.tz\b",
+        "oli nukta tie nukta goo nukta Tanzania",
+        value,
+        flags=re.I,
+    )
+    value = value.replace("//", " mkaju ")
+    value = re.sub(r"(?<!\w)SQA\s*-\s*DSM(?!\w)", "SQA, Dar es Salaam", value, flags=re.I)
+    value = re.sub(r"(?<!\w)UDSM(?!\w)", "yudizim", value, flags=re.I)
+    value = re.sub(r"(?<!\w)UDOM(?!\w)", "yudom", value, flags=re.I)
+    value = re.sub(r"(?<!\w)DUCE(?!\w)", "duse", value, flags=re.I)
+    value = re.sub(r"(?<!\w)SUA(?!\w)", "sua", value, flags=re.I)
+    value = re.sub(r"(?<!\w)ARU(?!\w)", "aruu", value, flags=re.I)
+    value = re.sub(r"(?<!\w)TET(?!\w)", "teti", value, flags=re.I)
+    value = re.sub(r"(?<!\w)Dkt\.?(?=\s|$)", "dactari", value, flags=re.I)
+    value = re.sub(r"(?<!\w)Bw\.?(?=\s|$)", "Bwana", value, flags=re.I)
+    value = re.sub(r"(?<!\w)Bi\.?(?=\s|$)", "bibi", value, flags=re.I)
+    # Book-wide arithmetic reading order and vertical-division pronunciation.
+    value = re.sub(
+        r"(?<!\d)\)\s*(\d[\d,]*)\s+(\d[\d,]*)",
+        lambda match: f"{match.group(2)} ÷ {match.group(1)}",
+        value,
+    )
+    value = re.sub(
+        r"(\d[\d,]*)\s*\)\s*(\d[\d,]*)",
+        lambda match: f"{match.group(2)} ÷ {match.group(1)}",
+        value,
+    )
+    value = re.sub(r"\bhatua\s+ya\s+1\b", "hatua ya kwanza", value, flags=re.I)
+    value = re.sub(r"\bhatua\s+ya\s+2\b", "hatua ya pili", value, flags=re.I)
+    value = re.sub(r"\bhatua\s+1\b", "hatua ya kwanza", value, flags=re.I)
+    value = re.sub(r"\bhatua\s+2\b", "hatua ya pili", value, flags=re.I)
+    # Pronounce referenced arithmetic steps as Swahili ordinals.
+    for step_number, step_word in (
+        ("3", "tatu"),
+        ("4", "nne"),
+        ("5", "tano"),
+        ("6", "sita"),
+        ("7", "saba"),
+        ("8", "nane"),
+        ("9", "tisa"),
+        ("10", "kumi"),
+    ):
+        value = re.sub(
+            rf"\bhatua\s+ya\s+{step_number}\b",
+            f"hatua ya {step_word}",
+            value,
+            flags=re.I,
+        )
+        value = re.sub(
+            rf"\bhatua\s+{step_number}\b",
+            f"hatua ya {step_word}",
+            value,
+            flags=re.I,
+        )
+    value = re.sub(
+        r"(?<![\d,.])\d{4,}(?![\d,.])",
+        lambda match: f"{int(match.group(0)):,}",
+        value,
+    )
+    # Normalize time and Tanzanian money notation before generic number handling.
+    page_match = re.match(r"pg(\d{3})_", data_id or "")
+    page_number = int(page_match.group(1)) if page_match else 0
+    if 151 <= page_number <= 168:
+        value = re.sub(
+            r"\b(\d{1,2}):(\d{2})\b",
+            lambda match: f"saa {int(match.group(1))} na dakika {int(match.group(2))}",
+            value,
+        )
+        value = re.sub(
+            r"\bsaa\s+0?(\d{1,2})(\d{2})\b",
+            lambda match: f"saa {int(match.group(1))} na dakika {int(match.group(2))}",
+            value,
+            flags=re.IGNORECASE,
+        )
+    if 169 <= page_number <= 184:
+        value = re.sub(
+            r"\)\s*sh\s+st\s+(\d+)\s+(\d+)\s+(\d+)",
+            lambda match: f"sh {match.group(2)} st {match.group(3)} ÷ {match.group(1)}",
+            value,
+            flags=re.IGNORECASE,
+        )
+        value = re.sub(
+            r"\)\s*sh\s+(\d+)\s+(\d+)",
+            lambda match: f"sh {match.group(2)} ÷ {match.group(1)}",
+            value,
+            flags=re.IGNORECASE,
+        )
+        value = re.sub(
+            r"\bsh\s*([\d,]+)\.(\d{2})\b",
+            lambda match: f"shilingi {match.group(1)} na senti {match.group(2)}",
+            value,
+            flags=re.IGNORECASE,
+        )
+        value = re.sub(r"\bsh\b", "shilingi", value, flags=re.IGNORECASE)
+        value = re.sub(r"\bst\b", "senti", value, flags=re.IGNORECASE)
+    # Reconstruct coordinate-extracted fraction formula order.
+    page_match = re.match(r"pg(\d{3})_", data_id or "")
+    page_number = int(page_match.group(1)) if page_match else 0
+    if 112 <= page_number <= 150:
+        value = re.sub(
+            r"(?:=\s*)?([×÷])\s*=\s*(\d+)\s+(\d+)\s+(\d+)\s+(\d+)",
+            lambda match: (
+                f"{match.group(2)} ya {match.group(4)} "
+                f"{match.group(1)} {match.group(3)} ya {match.group(5)} ="
+            ),
+            value,
+        )
+        value = re.sub(
+            r"(?:=\s*)?([×÷])\s*=\s*(\d+)\s+(\d+)\s+(\d+)",
+            lambda match: (
+                f"{match.group(2)} ya {match.group(4)} "
+                f"{match.group(1)} {match.group(3)} ="
+            ),
+            value,
+        )
+        value = re.sub(
+            r"(?<!\d)(\d+)\s*/\s*(\d+)(?!\d)",
+            lambda match: f"{match.group(1)} ya {match.group(2)}",
+            value,
+        )
+
+    # Read every decimal digit separately after the decimal point.
+    value = re.sub(
+        r"(?<![\d.])(\d+)\.(\d+)(?![\d.])",
+        lambda match: (
+            f"{match.group(1)} nukta {' '.join(match.group(2))}"
+        ),
+        value,
+    )
+    value = re.sub(r"\s*×\s*=\s*", " = ", value)
+    value = re.sub(
+        r"\bzidisha\s+kwa\s+sawa\s+sawa\s+na\b",
+        "sawa sawa na",
+        value,
+        flags=re.I,
+    )
+    value = re.sub(r"\s*×\s*", " × ", value)
+    value = re.sub(r"\s*÷\s*", " ÷ ", value)
+    value = re.sub(r"\s*=\s*", " = ", value)
+    # Pronounce squared and cubed metric units before plain unit abbreviations.
+    for area_unit, area_name in (
+        ("km", "kilometa za mraba"),
+        ("m", "meta za mraba"),
+        ("sm", "sentimeta za mraba"),
+        ("mm", "milimeta za mraba"),
+    ):
+        value = re.sub(
+            rf"(?<![A-Za-z]){area_unit}\s*(?:²|\^2)(?!\d)",
+            area_name + " ",
+            value,
+        )
+    for volume_unit, volume_name in (
+        ("m", "meta za ujazo"),
+        ("sm", "sentimeta za ujazo"),
+        ("mm", "milimeta za ujazo"),
+    ):
+        value = re.sub(
+            rf"(?<![A-Za-z]){volume_unit}\s*(?:³|\^3)(?!\d)",
+            volume_name + " ",
+            value,
+        )
+    # Book-wide Tanzanian Swahili metric-unit pronunciation.
+    if re.search(
+        r"vipimo vya.*urefu|sentimeta|kilometa|\b(?:km|hm|dam|dm|sm|mm)\b",
+        value,
+        flags=re.I,
+    ):
+        for abbreviation, pronunciation in (
+            ("km", "kilometa"),
+            ("hm", "hektometa"),
+            ("dam", "dekameta"),
+            ("dm", "desimeta"),
+            ("sm", "sentimeta"),
+            ("mm", "milimeta"),
+            ("m", "meta"),
+        ):
+            value = re.sub(
+                rf"(?<![A-Za-z]){abbreviation}(?![A-Za-z])",
+                pronunciation + " ",
+                value,
+            )
+
+    if re.search(
+        r"vipimo vya.*uzani|kilogramu|miligramu|\b(?:kg|hg|dag|dg|sg|mg)\b",
+        value,
+        flags=re.I,
+    ):
+        for abbreviation, pronunciation in (
+            ("kg", "kilogramu"),
+            ("hg", "hektogramu"),
+            ("dag", "dekagramu"),
+            ("dg", "desigramu"),
+            ("sg", "sentigramu"),
+            ("mg", "miligramu"),
+            ("g", "gramu"),
+            ("t", "tani"),
+        ):
+            value = re.sub(
+                rf"(?<![A-Za-z]){abbreviation}(?![A-Za-z])",
+                pronunciation + " ",
+                value,
+            )
+
+    if re.search(r"vipimo vya.*ujazo|mililita|\bmL\b", value, flags=re.I):
+        value = re.sub(r"(?<![A-Za-z])mL(?![A-Za-z])", "mililita ", value)
+        value = re.sub(r"(?<![A-Za-z])L(?![A-Za-z])", "lita ", value)
     value = re.sub(r"HISABATI DRS 4 PB 2024\.indd\s+\d+", " ", value, flags=re.I)
     value = re.sub(r"\b\d{2}/\d{2}/\d{4}\s+\d{2}:\d{2}:\d{2}\b", " ", value)
-    value = re.sub(r"\bISBN\s*:\s*978-9912-753-61-7\b", "namba ya kitabu", value, flags=re.I)
+    value = re.sub(
+        r"\bISBN\s*:\s*978-9912-753-61-7\b",
+        "aiesibini, tisa saba nane, tisa tisa moja mbili, saba tano tatu, sita moja, saba",
+        value,
+        flags=re.I,
+    )
+    value = re.sub(r"(?<!\w)S\.\s*L\.\s*P\.?(?!\w)", "esi elo pi", value, flags=re.I)
+    value = re.sub(r"(?<=\d)\s*/\s*(?=\+?\d)", " au ", value)
+
+    # Option labels are letters, not Roman numerals. Expand them before the
+    # Roman pass so (c) is spoken as "Kipengele che", never "si".
+    value = re.sub(
+        r"\(([a-z])\)",
+        lambda match: " Kipengele " + LETTERS[match.group(1).upper()] + ". ",
+        value,
+        flags=re.I,
+    )
+
+    # Web addresses and email addresses must be narrated as destinations,
+    # before slash and punctuation characters are interpreted as mathematics.
+    value = re.sub(
+        r"https?://(?:www\.)?ol\.tie\.go\.tz|(?<![\w.])ol\.tie\.go\.tz",
+        "tovuti ya maktaba mtandao ya Taasisi ya Elimu Tanzania",
+        value,
+        flags=re.I,
+    )
+    value = re.sub(
+        r"director\.general@tie\.go\.tz",
+        "barua pepe dairekta nukta jenerali ati tai nukta goo nukta tizi",
+        value,
+        flags=re.I,
+    )
+    value = re.sub(
+        r"www\.tie\.go\.tz",
+        "dabiliyu dabiliyu dabiliyu nukta tai nukta goo nukta tizi",
+        value,
+        flags=re.I,
+    )
 
     if re.search(r"\b(?:Kirumi|numerali)\b", value, re.I):
-        value = re.sub(r"(?<![A-Za-z])[IVXLCDM]+(?![A-Za-z])", spell_roman, value, flags=re.I)
+        value = re.sub(r"(?<![A-Za-z])[IVXLCDM]+(?![A-Za-z])", spell_roman, value)
 
     value = re.sub(r"\b(\d{1,2}):(\d{2})\b",
                    lambda m: "saa " + number_words(int(m.group(1))) + " na dakika " + number_words(int(m.group(2))),
@@ -388,10 +863,779 @@ SEMANTIC_PAGE_AUDIO = {
 }
 
 
+PAGE_NARRATION_OVERRIDES = {
+    "pg001_gp001_tx001": """
+Hisabati. Kitabu cha Mwanafunzi. Darasa la Nne.
+Maelezo ya picha ya cheti. Hiki ni Cheti cha Ithibati namba 1637 kilichotolewa na Wizara ya Elimu, Sayansi na Teknolojia ya Jamhuri ya Muungano wa Tanzania.
+Jina la chapisho ni Hisabati, Kitabu cha Mwanafunzi Darasa la Nne.
+Mchapishaji ni Taasisi ya Elimu Tanzania. Mwandishi ni Taasisi ya Elimu Tanzania.
+Aiesibini, tisa saba nane, tisa tisa moja mbili, saba tano tatu, sita moja, saba.
+Cheti kinaeleza kuwa kitabu hiki kiliidhinishwa na Wizara ya Elimu, Sayansi na Teknolojia tarehe 11 Septemba 2024 kuwa kitabu cha kiada kwa mwanafunzi wa Darasa la Nne katika elimu ya msingi nchini Tanzania, kwa kuzingatia Muhtasari wa mwaka 2023.
+Sehemu ya chini ya cheti ina sahihi ya Daktari Lyabwene Mtahabwa, Kamishna wa Elimu.
+Chini ya jalada limeandikwa jina la mchapishaji, Taasisi ya Elimu Tanzania.
+""",
+    "pg002_gp001_tx001": """
+atimiliki Taasisi ya Elimu Tanzania elfu mbili na ishirini na nne.
+Toleo la kwanza elfu mbili na kumi na nane. Chapa ya Pili elfu mbili na ishirini na moja. Toleo la Pili elfu mbili na ishirini na nne.
+Aiesibini, tisa saba nane, tisa tisa moja mbili, saba tano tatu, sita moja, saba.
+Taasisi ya Elimu Tanzania. Eneo la Mikocheni. Mia moja na thelathini na mbili Barabara ya Ali Hassan Mwinyi.
+Esi elo pi elfu thelathini na tano na tisini na nne. Elfu kumi na nne mia moja na kumi na mbili Dar es Salaam.
+Simu: jumlisha mbili tano tano, saba tatu tano, sifuri nne moja, moja saba sifuri; au jumlisha mbili tano tano, saba tatu tano, sifuri nne moja, moja sita nane.
+Barua pepe: dairecta doti genero ati tai doti goo doti tizedi.
+Tovuti: dabiliyu dabiliyu dabiliyu doti tai doti goo doti tizedi.
+Haki zote zimehifadhiwa. Hairuhusiwi kunakili, kurudufu, kuchapisha, kutafsiri wala kukitoa kitabu hiki kwa namna yoyote ile bila idhini ya maandishi kutoka Taasisi ya Elimu Tanzania.
+""",
+    "pg003_gp001_tx001": """
+Yaliyomo. Shukurani, ukurasa wa nne. Utangulizi, ukurasa wa tano. Sura ya kwanza, Namba za Kirumi, ukurasa wa saba. Sura ya pili, Kuzidisha namba nzima, ukurasa wa ishirini na saba. Sura ya tatu, Kugawanya namba nzima, ukurasa wa arobaini na mbili. Sura ya nne, Vipimo vya urefu, uzani na ujazo, ukurasa wa hamsini na tano. Sura ya tano, Mzingo wa maumbo bapa, ukurasa wa themanini na nne. Sura ya sita, Eneo la maumbo bapa, ukurasa wa tisini na tisa. Sura ya saba, Sehemu, ukurasa wa mia moja na kumi na mbili. Sura ya nane, Desimali, ukurasa wa mia moja na thelathini na mbili. Sura ya tisa, Vipimo vya muda, ukurasa wa mia moja na hamsini na moja. Sura ya kumi, Fedha ya Tanzania, ukurasa wa mia moja na sitini na tisa.
+""",
+    "pg004_gp001_tx001": """
+Shukurani.
+Taasisi ya Elimu Tanzania, Teti, inatambua na kuthamini mchango muhimu wa washiriki kutoka taasisi mbalimbali za serikali na zisizo za serikali zilizoshiriki kufanikisha uandishi wa kitabu hiki cha mwanafunzi.
+Kipekee, Teti inatoa shukurani kwa Chuo Kikuu cha Dar es Salaam, Yudizim; Chuo Kikuu cha Dodoma, Yudom; Chuo Kishiriki cha Elimu Dar es Salaam, Duse; Chuo Kikuu cha Ardhi, Aruu; Chuo Kikuu cha Sokoine, Sua; Idara ya Uthibiti Ubora wa Shule, vyuo vya ualimu na shule za msingi.
+Pia, Teti inatoa shukurani za dhati kwa mchango uliotolewa na wataalamu wafuatao.
+Waandishi.
+Mwandishi wa kwanza ni Bibi Ivy pe Bimbiga, Teti.
+Mwandishi wa pili ni Bwana Jonathan he Paskali, Teti.
+Mwandishi wa tatu ni Daktari Kenneth re Nzowa, Teti.
+Mwandishi wa nne ni Daktari Ahmada o Ally, Aruu.
+Mwandishi wa tano ni Daktari Zubeda se Mussa, Duse.
+Mwandishi wa sita ni Daktari Jason me Mkenyeleye, Yudom.
+Mwandishi wa saba ni Daktari Emmanuel e Sinkwembe, Yudizim.
+Mwandishi wa nane ni Daktari Linus ne Kisoma, Sua.
+Wahariri.
+Mhariri wa kwanza ni Daktari Makungu Mwanzalima, Yudizim.
+Mhariri wa pili ni Bwana Elikana e Manyilizu, esi kyu ei Dar es Salaam.
+Wachoraji.
+Mchoraji wa kwanza ni Bwana Fikiri aa Msimbe, Teti.
+Mchoraji wa pili ni Bibi Victoria re Mwinyi.
+Msanifu.
+Msanifu ni Bibi Pamela se Makusi.
+Mratibu.
+Mratibu ni Bibi Ivy pe Bimbiga.
+Vile vile, Teti inatoa shukurani kwa walimu wote wa shule za msingi na wanafunzi walioshiriki katika ujaribishaji wa kitabu hiki.
+Mwisho, Teti inaishukuru Serikali ya Jamhuri ya Muungano wa Tanzania kwa kutoa fedha zilizofanikisha kazi ya uandishi na uchapishaji wa kitabu hiki.
+Sahihi ya Mkurugenzi Mkuu.
+Daktari Aneth aa Komba.
+Mkurugenzi Mkuu.
+Taasisi ya Elimu Tanzania.
+""",
+    "pg005_gp001_tx001": """
+Utangulizi.
+Kitabu hiki cha Hisabati kimetayarishwa mahususi kwa ajili ya mwanafunzi wa Darasa la nne, Tanzania Bara.
+Kitabu hiki kimeandaliwa kulingana na Muhtasari wa Somo la Hisabati Elimu ya Msingi Darasa la Tatu hadi la Sita uliotolewa na Wizara ya Elimu, Sayansi na Teknolojia mwaka elfu mbili na ishirini na tatu.
+Aidha, kitabu hiki ni toleo la pili lililoboreshwa kutoka kitabu cha Hisabati Darasa la Nne kilichochapishwa mwaka elfu mbili na kumi na nane kwa kuzingatia Muhtasari wa mwaka elfu mbili na kumi na sita.
+Kitabu hiki kina sura kumi ambazo ni Namba za Kirumi, Kuzidisha namba nzima, Kugawanya namba nzima, Vipimo vya urefu, Uzani na ujazo, Mzingo wa umbo bapa, Eneo la umbo bapa, Sehemu, Desimali, Vipimo vya muda, na Fedha ya Tanzania.
+Kwa kujifunza maudhui ya kitabu hiki, utakuza umahiri wa kumudu misingi ya awali ya kihisabati na kutumia stadi za kihisabati katika kufikiri kimantiki, kutafsiri na kutatua matatizo ya maisha ya kila siku.
+Maudhui ya sura hizi yamewasilishwa kwa njia ya matini, michoro, picha pamoja na kazi za vitendo.
+Unashauriwa kufanya kazi zote na mazoezi yote yaliyomo katika kitabu hiki, pamoja na kazi nyingine utakazopewa na mwalimu.
+Hii itakuwezesha kukuza maarifa na stadi zinazokusudiwa kwa mwanafunzi.
+Jifunze zaidi kupitia maktaba mtandao.
+Anuani ya kwanza ni echititipiesi, mkaju, oli doti tai doti goo doti tizedi.
+Au tumia oli doti tai doti goo doti tizedi.
+Maelezo ya picha ya msimbo.
+Sehemu ya chini ya ukurasa ina picha ya msimbo wa kiu ari wenye umbo la mraba na mpangilio wa miraba myeusi na myeupe.
+Msimbo huu unaweza kuchanganuliwa kwa kamera ya simu ili kufungua maktaba mtandao ya Taasisi ya Elimu Tanzania.
+Mwanafunzi anaweza kuomba msaada wa mwalimu, mzazi au mlezi kuuchanganua.
+Maktaba hiyo ina nyenzo za ziada za kujifunzia.
+Chini ya ukurasa limeandikwa jina la mchapishaji, Taasisi ya Elimu Tanzania.
+""",
+    "pg007_gp001_tx001": """
+Sura ya Kwanza. Namba za Kirumi.
+Utangulizi.
+Katika sura hii, utajifunza kusoma na kuandika namba moja hadi elfu moja kwa Kirumi.
+Namba hizo kwa Kirumi huanzia herufi ai kubwa, yenye thamani ya moja, hadi herufi emu kubwa, yenye thamani ya elfu moja.
+Namba za Kirumi zinatumika katika maeneo mbalimbali kama vile kurasa za awali za vitabu na nyuso za saa.
+Umahiri utakaoujenga utakuwezesha kutumia namba za Kirumi katika miktadha mbalimbali.
+Sehemu ya Fikiri.
+Picha inaonesha mwanafunzi akiwa ameweka kidole kwenye kidevu kama mtu anayefikiria.
+Swali la kufikiria ni, maisha bila namba yangekuwaje?
+Namba za Kirumi kuanzia herufi ai kubwa hadi herufi eksi kubwa.
+Namba nzima zinaundwa na tarakimu kumi, ambazo ni sifuri, moja, mbili, tatu, nne, tano, sita, saba, nane na tisa.
+Namba za Kirumi huandikwa kwa kutumia herufi moja au muunganiko wa herufi za alfabeti.
+Soma namba katika jedwali lifuatalo.
+Maelezo ya jedwali.
+Jedwali lina safu tatu na mistari mitano ya namba.
+Safu ya kwanza ina numerali tunazotumia kawaida.
+Safu ya pili ina namna numerali hiyo inavyoandikwa kwa Kirumi.
+Safu ya tatu ina namba hiyo kwa maneno.
+Sasa tusome kila mstari kwa utaratibu.
+Mstari wa kwanza.
+Numerali ni moja.
+Kwa Kirumi inaandikwa kwa herufi ai kubwa moja, yenye thamani ya moja.
+Kwa maneno ni moja.
+Mstari wa pili.
+Numerali ni mbili.
+Kwa Kirumi inaandikwa kwa herufi ai kubwa mbili zinazofuatana, yaani ai, ai.
+Kila herufi ai kubwa ina thamani ya moja.
+Hivyo, moja jumlisha moja, sawa sawa na mbili.
+Kwa maneno ni mbili.
+Mstari wa tatu.
+Numerali ni tatu.
+Kwa Kirumi inaandikwa kwa herufi ai kubwa tatu zinazofuatana, yaani ai, ai, ai.
+Hivyo, moja jumlisha moja jumlisha moja, sawa sawa na tatu.
+Kwa maneno ni tatu.
+Mstari wa nne.
+Numerali ni nne.
+Kwa Kirumi inaandikwa kwa herufi ai kubwa ikifuatiwa na herufi vi kubwa.
+Herufi ai kubwa ikiwa kabla ya herufi vi kubwa, thamani ya moja hutolewa katika tano.
+Hivyo, tano toa moja, sawa sawa na nne.
+Kwa maneno ni nne.
+Mstari wa tano.
+Numerali ni tano.
+Kwa Kirumi inaandikwa kwa herufi vi kubwa moja, yenye thamani ya tano.
+Kwa maneno ni tano.
+Kwa hiyo, jedwali linafundisha kuwa herufi ai kubwa ina thamani ya moja, na herufi vi kubwa ina thamani ya tano.
+Mpangilio wa herufi hizo ndio unaotengeneza namba moja hadi tano kwa Kirumi.
+""",
+    "pg008_gp001_tx001": """
+Mwendelezo wa jedwali la namba za Kirumi.
+Jedwali linaendelea kutoka namba sita hadi namba kumi.
+Kila mstari una numerali, namna inavyoandikwa kwa Kirumi, na namba kwa maneno.
+Mstari wa sita.
+Numerali ni sita.
+Kwa Kirumi inaandikwa kwa herufi vi kubwa ikifuatiwa na herufi ai kubwa, yaani vi, ai.
+Herufi vi kubwa ina samani ya tano na herufi ai kubwa ina samani ya moja.
+Hivyo, tano jumlisha moja, sawa sawa na sita.
+Kwa maneno ni sita.
+Mstari wa saba.
+Numerali ni saba.
+Kwa Kirumi inaandikwa vi, ai, ai.
+Hivyo, tano jumlisha moja jumlisha moja, sawa sawa na saba.
+Kwa maneno ni saba.
+Mstari wa nane.
+Numerali ni nane.
+Kwa Kirumi inaandikwa vi, ai, ai, ai.
+Hivyo, tano jumlisha moja jumlisha moja jumlisha moja, sawa sawa na nane.
+Kwa maneno ni nane.
+Mstari wa tisa.
+Numerali ni tisa.
+Kwa Kirumi inaandikwa kwa herufi ai kubwa ikifuatiwa na herufi eksi kubwa, yaani ai, eksi.
+Herufi ai kubwa ikiwa kabla ya herufi eksi kubwa, samani ya moja hutolewa katika kumi.
+Hivyo, kumi toa moja, sawa sawa na tisa.
+Kwa maneno ni tisa.
+Mstari wa kumi.
+Numerali ni kumi.
+Kwa Kirumi inaandikwa kwa herufi eksi kubwa moja, yenye samani ya kumi.
+Kwa maneno ni kumi.
+Kazi ya kufanya ya kwanza. Kubainisha namba za Kirumi.
+Kazi hii ina maelekezo matatu.
+Maelekezo ya kwanza.
+Tumia vyanzo mbalimbali vya kuaminika vilivyomo mtandaoni, kama vile Khan Akademi, ili kujifunza vitu vinavyotumia namba za Kirumi.
+Maelekezo ya pili.
+Andika majina ya vitu ulivyovipata kutoka katika maelekezo ya kwanza.
+Maelekezo ya tatu.
+Fikiria na ujibu swali hili. Kuna umuhimu gani kwako kufanya shughuli hii?
+Kuandika namba za Kirumi kuanzia herufi ai kubwa hadi herufi eksi kubwa.
+Herufi ai kubwa, yenye samani ya moja, inaweza kurudiwa ili kuunda namba nyingine.
+Jedwali la kwanza lina safu ya numerali na safu ya namba kwa Kirumi.
+Numerali moja inaandikwa kwa Kirumi kwa herufi ai kubwa moja.
+Numerali mbili inaandikwa kwa herufi ai kubwa mbili, yaani ai, ai.
+Numerali tatu inaandikwa kwa herufi ai kubwa tatu, yaani ai, ai, ai.
+Herufi ai kubwa haiwezi kujirudia zaidi ya mara tatu katika namba moja.
+Herufi ai kubwa, vi kubwa na eksi kubwa zinatumika kuunda namba nyingine za Kirumi.
+Jedwali la pili linaonyesha numerali nne hadi tisa na namna zinavyoandikwa kwa Kirumi.
+Numerali nne inaandikwa ai, vi. Herufi ai kubwa iko kabla ya vi kubwa, hivyo tano toa moja, sawa sawa na nne.
+Numerali tano inaandikwa vi.
+Numerali sita inaandikwa vi, ai. Tano jumlisha moja, sawa sawa na sita.
+Numerali saba inaandikwa vi, ai, ai. Tano jumlisha moja jumlisha moja, sawa sawa na saba.
+Numerali nane inaandikwa vi, ai, ai, ai. Tano jumlisha moja jumlisha moja jumlisha moja, sawa sawa na nane.
+Numerali tisa inaandikwa ai, eksi. Herufi ai kubwa iko kabla ya eksi kubwa, hivyo kumi toa moja, sawa sawa na tisa.
+Kwa hiyo, herufi yenye samani ndogo ikiwekwa baada ya herufi yenye samani kubwa, samani zake hujumlishwa.
+Herufi yenye samani ndogo ikiwekwa kabla ya herufi yenye samani kubwa, samani ndogo hutolewa katika samani kubwa.
+""",
+    "pg009_gp001_tx001": """
+Namba za Kirumi. Kanuni ya kujumlisha na kutoa.
+Kanuni ya kwanza.
+Namba ya Kirumi yenye samani ndogo ikiandikwa kulia, yaani baada ya namba ya Kirumi yenye samani sawa au kubwa zaidi, samani za alama hizo hujumlishwa.
+Mfano wa kwanza.
+Andika namba zifuatazo kwa numerali za kawaida.
+Kipengele aa.
+Namba ya Kirumi ni ai, ai.
+Hii ni herufi ai kubwa mbili zinazofuatana.
+Njia.
+Moja jumlisha moja, sawa sawa na mbili.
+Kwa hiyo, ai, ai, ni numerali mbili.
+Kipengele be.
+Namba ya Kirumi ni vi, ai.
+Herufi vi kubwa ina samani ya tano, na herufi ai kubwa iliyo kulia ina samani ya moja.
+Njia.
+Tano jumlisha moja, sawa sawa na sita.
+Kwa hiyo, vi, ai, ni numerali sita.
+Kipengele che.
+Namba ya Kirumi ni vi, ai, ai.
+Herufi vi kubwa ina samani ya tano, na herufi ai kubwa mbili zilizo kulia zina jumla ya mbili.
+Njia.
+Tano jumlisha mbili, sawa sawa na saba.
+Kwa hiyo, vi, ai, ai, ni numerali saba.
+Kipengele de.
+Namba ya Kirumi ni vi, ai, ai, ai.
+Herufi vi kubwa ina samani ya tano, na herufi ai kubwa tatu zilizo kulia zina jumla ya tatu.
+Njia.
+Tano jumlisha tatu, sawa sawa na nane.
+Kwa hiyo, vi, ai, ai, ai, ni numerali nane.
+Kanuni ya pili.
+Namba ya Kirumi yenye samani ndogo ikiandikwa kushoto, yaani kabla ya namba ya Kirumi yenye samani kubwa, samani ndogo hutolewa katika samani kubwa.
+Mfano wa pili.
+Andika namba zifuatazo kwa numerali za kawaida.
+Kipengele aa.
+Namba ya Kirumi ni ai, vi.
+Herufi ai kubwa yenye samani ya moja iko kushoto, kabla ya herufi vi kubwa yenye samani ya tano.
+Njia.
+Tano toa moja, sawa sawa na nne.
+Kwa hiyo, ai, vi, ni numerali nne.
+Kipengele be.
+Namba ya Kirumi ni ai, eksi.
+Herufi ai kubwa yenye samani ya moja iko kushoto, kabla ya herufi eksi kubwa yenye samani ya kumi.
+Njia.
+Kumi toa moja, sawa sawa na tisa.
+Kwa hiyo, ai, eksi, ni numerali tisa.
+Kanuni ya kukumbuka.
+Alama yenye samani ndogo ikiwa kulia, baada ya alama kubwa, jumlisha.
+Alama yenye samani ndogo ikiwa kushoto, kabla ya alama kubwa, toa.
+""",
+    "pg010_gp001_tx001": """
+Zoezi la kwanza.
+Zoezi hili lina maswali matano.
+Swali la kwanza.
+Andika namba zifuatazo za Kirumi kuanzia ndogo hadi kubwa.
+Alama ya kwanza ni ai, eksi.
+Alama ya pili ni vi, ai.
+Alama ya tatu ni eksi.
+Alama ya nne ni ai, vi.
+Alama ya tano ni vi, ai, ai.
+Alama ya sita ni vi.
+Alama ya saba ni vi, ai, ai, ai.
+Swali la pili.
+Badili namba zifuatazo za Kirumi kuwa numerali za kawaida.
+Vi, ai, ai; ai, vi; vi, ai; vi; vi, ai, ai, ai; na ai, eksi.
+Swali la tatu.
+Badili numerali tatu, sita, saba, moja, nane, nne, kumi, tisa na tano kuwa namba za Kirumi.
+Swali la nne.
+Jaza namba zinazokosekana katika jedwali.
+Maelezo ya jedwali la zoezi.
+Jedwali lina mistari miwili.
+Mstari wa kwanza unaitwa Namba kwa maneno.
+Una maneno sita, saba, tisa, nne na kumi.
+Mstari wa pili unaitwa Namba kwa Kirumi.
+Katika mstari huu, kisanduku kilicho chini ya neno nne kina alama ai, vi.
+Visanduku vilivyo chini ya sita, saba, tisa na kumi havijajazwa.
+Jaza kila kisanduku kwa namba sahihi ya Kirumi.
+Swali la tano.
+Mzazi aliwanunulia watoto viatu vyenye namba eksi, vi, na vi, ai, ai.
+Andika namba za viatu hivyo kwa numerali za kawaida.
+Namba za Kirumi kuanzia kumi na moja hadi ishirini.
+Soma namba zifuatazo katika jedwali.
+Maelezo ya jedwali.
+Jedwali lina mistari mitatu.
+Mstari wa kwanza una namba kwa Kirumi.
+Mstari wa pili una numerali za kawaida.
+Mstari wa tatu una namba kwa maneno.
+Sasa tusome kila safu.
+Kumi na moja.
+Kwa Kirumi inaandikwa eksi, ai.
+Hii ni kumi jumlisha moja, sawa sawa na kumi na moja.
+Kumi na mbili.
+Kwa Kirumi inaandikwa eksi, ai, ai.
+Hii ni kumi jumlisha mbili, sawa sawa na kumi na mbili.
+Kumi na tatu.
+Kwa Kirumi inaandikwa eksi, ai, ai, ai.
+Hii ni kumi jumlisha tatu, sawa sawa na kumi na tatu.
+Kumi na nne.
+Kwa Kirumi inaandikwa eksi, ai, vi.
+Alama ai, vi ina samani ya nne.
+Hivyo, kumi jumlisha nne, sawa sawa na kumi na nne.
+Kumi na tano.
+Kwa Kirumi inaandikwa eksi, vi.
+Kumi jumlisha tano, sawa sawa na kumi na tano.
+Kumi na sita.
+Kwa Kirumi inaandikwa eksi, vi, ai.
+Kumi jumlisha tano jumlisha moja, sawa sawa na kumi na sita.
+Kumi na saba.
+Kwa Kirumi inaandikwa eksi, vi, ai, ai.
+Kumi jumlisha tano jumlisha mbili, sawa sawa na kumi na saba.
+Kumi na nane.
+Kwa Kirumi inaandikwa eksi, vi, ai, ai, ai.
+Kumi jumlisha tano jumlisha tatu, sawa sawa na kumi na nane.
+Kumi na tisa.
+Kwa Kirumi inaandikwa eksi, ai, eksi.
+Alama ai, eksi ina samani ya tisa.
+Hivyo, kumi jumlisha tisa, sawa sawa na kumi na tisa.
+Ishirini.
+Kwa Kirumi inaandikwa eksi, eksi.
+Kumi jumlisha kumi, sawa sawa na ishirini.
+Mfano wa kwanza.
+Andika namba zifuatazo kwa Kirumi.
+Kipengele aa, numerali kumi na nne.
+Kipengele be, numerali kumi na saba.
+Kipengele che, numerali kumi na tisa.
+Tumia jedwali la kumi na moja hadi ishirini lililo juu kupata majibu.
+""",
+    "pg011_gp001_tx001": """
+Njia.
+Kipengele aa.
+Kumi na nne sawa sawa na alama eksi jumlisha alama ai, vi.
+Sawa sawa na alama eksi, ai, vi.
+Kwa hiyo, kumi na nne kwa Kirumi ni eksi, ai, vi.
+Kipengele be.
+Kumi na saba sawa sawa na alama eksi jumlisha alama vi, ai, ai.
+Sawa sawa na kumi na saba.
+Kwa hiyo, kumi na saba kwa Kirumi ni eksi, vi, ai, ai.
+Kipengele che.
+Kumi na tisa sawa sawa na alama eksi jumlisha alama ai, eksi.
+Sawa sawa na alama eksi, ai, eksi.
+Kwa hiyo, kumi na tisa kwa Kirumi ni eksi, ai, eksi.
+Mfano wa pili.
+Badili namba zifuatazo kuwa numerali.
+Kipengele aa, alama eksi, ai, ai.
+Kipengele be, alama eksi, vi.
+Kipengele che, alama eksi, vi, ai, ai, ai.
+Njia.
+Kipengele aa.
+Alama eksi, ai, ai sawa sawa na kumi jumlisha mbili.
+Sawa sawa na kumi na mbili.
+Kwa hiyo, eksi, ai, ai ni numerali kumi na mbili.
+Kipengele be.
+Alama eksi, vi sawa sawa na kumi jumlisha tano.
+Sawa sawa na kumi na tano.
+Kwa hiyo, eksi, vi ni numerali kumi na tano.
+Kipengele che.
+Alama eksi, vi, ai, ai, ai sawa sawa na kumi jumlisha nane.
+Sawa sawa na kumi na nane.
+Kwa hiyo, eksi, vi, ai, ai, ai ni numerali kumi na nane.
+Zoezi la pili.
+Swali la kwanza.
+Andika namba yenye samani kubwa katika orodha hii:
+eksi, ai, ai;
+eksi, ai, ai, ai;
+eksi, vi;
+eksi, ai, eksi;
+eksi, vi, ai;
+eksi, vi, ai, ai;
+eksi, vi, ai, ai, ai;
+na eksi, ai, vi.
+Swali la pili.
+Andika namba zifuatazo kwa maneno.
+Kipengele aa, eksi, ai, vi.
+Kipengele be, eksi, vi, ai.
+Kipengele che, eksi, eksi.
+Kipengele de, eksi, ai.
+Kipengele e, eksi, vi.
+Kipengele fe, eksi, ai, eksi.
+""",
+    "pg012_gp001_tx001": """
+Zoezi la pili linaendelea. Swali la tatu. Kadi ziliandikwa numerali kumi na tisa, kumi na saba, kumi na tatu, kumi na sita, ishirini, kumi na nne, kumi na mbili, kumi na nane, kumi na moja na kumi na tano. Andika namba hizo kwa namba za Kirumi, kisha zipange kuanzia namba yenye samani ndogo hadi namba yenye samani kubwa. Swali la nne. Badili eksi, ai; eksi, vi, ai, ai, ai; eksi, vi; eksi, vi, ai, ai; na eksi, ai, ai kwa numerali. Swali la tano. Andika namba zinazokosekana katika kila mpangilio. Kipengele aa. Eksi; nafasi tupu; eksi, ai, vi; eksi, vi, ai; nafasi tupu; eksi, eksi. Mpangilio huu unaongezeka kwa samani sawa katika kila hatua. Jaza nafasi bila kubadilisha utaratibu huo. Kipengele be. Nafasi tupu; eksi, ai, vi; nafasi tupu; eksi, ai, ai; nafasi tupu; eksi. Mpangilio huu unapungua kwa samani sawa katika kila hatua. Jaza nafasi kwa kufuata utaratibu huo. Swali la sita. Soma uso wa saa, kisha andika muda huo kwa numerali. Maelezo ya mchoro wa saa. Saa ni ya mviringo na ina namba za Kirumi kuanzia ai hadi eksi, ai, ai. Mkono mfupi mweusi unaelekea kwenye alama eksi. Mkono mrefu mweusi unaelekea kwenye alama ai, ai. Mkono mwembamba mwekundu unaelekea juu kwenye alama eksi, ai, ai. Kwa kusoma muda, tumia mkono mfupi kuonesha saa na mkono mrefu kuonesha dakika. Kisha andika muda kwa numerali. Namba za Kirumi kuanzia ishirini na moja hadi thelathini na tatu. Maelezo ya jedwali. Jedwali lina mistari miwili. Mstari wa kwanza una numerali kuanzia ishirini na moja hadi thelathini na tatu. Mstari wa pili una namba inayolingana kwa Kirumi. Soma kila safu kutoka juu kwenda chini. Ishirini na moja ni eksi, eksi, ai. Ishirini na mbili ni eksi, eksi, ai, ai. Ishirini na tatu ni eksi, eksi, ai, ai, ai. Ishirini na nne ni eksi, eksi, ai, vi. Ishirini na tano ni eksi, eksi, vi. Ishirini na sita ni eksi, eksi, vi, ai. Ishirini na saba ni eksi, eksi, vi, ai, ai. Ishirini na nane ni eksi, eksi, vi, ai, ai, ai. Ishirini na tisa ni eksi, eksi, ai, eksi. Thelathini ni eksi eksi eksi. Thelathini na moja ni eksi eksi eksi ai. Thelathini na mbili ni eksi eksi eksi ai ai. Thelathini na tatu ni eksi eksi eksi ai ai ai.
+""",
+    "pg013_gp001_tx001": """
+Mifano ya kubadili numerali na namba za Kirumi, kisha mwanzo wa Zoezi la tatu.
+Mfano wa kwanza. Andika numerali zifuatazo kwa Kirumi.
+Kipengele aa. Numerali ishirini na nne.
+Njia. Andika ishirini na nne kama ishirini jumlisha nne.
+Ishirini huandikwa eksi, eksi.
+Nne huandikwa ai, vi, kwa sababu ai iko kabla ya vi; tano toa moja sawa sawa na nne.
+Unganisha alama. Jibu ni eksi, eksi, ai, vi.
+Kwa hiyo, ishirini na nne huandikwa eksi, eksi, ai, vi.
+Kipengele be. Numerali thelathini na saba.
+Njia. Andika thelathini na saba kama thelathini jumlisha saba.
+Thelathini huandikwa eksi mara tatu.
+Saba huandikwa vi, ai, ai; yaani tano jumlisha mbili.
+Unganisha alama. Jibu ni eksi mara tatu, vi, ai, ai.
+Kwa hiyo, thelathini na saba huandikwa eksi mara tatu, vi, ai, ai.
+Kipengele che. Numerali ishirini na saba.
+Njia. Andika ishirini na saba kama ishirini jumlisha saba.
+Ishirini ni eksi, eksi. Saba ni vi, ai, ai.
+Unganisha alama. Jibu ni eksi, eksi, vi, ai, ai.
+Kwa hiyo, ishirini na saba huandikwa eksi, eksi, vi, ai, ai.
+Mfano wa pili. Andika namba za Kirumi kwa numerali.
+Kipengele aa. Alama ni eksi, eksi, ai.
+Eksi mbili zina samani ya ishirini. Ai ina samani ya moja.
+Ishirini jumlisha moja sawa sawa na ishirini na moja.
+Kwa hiyo, eksi, eksi, ai ni numerali ishirini na moja.
+Kipengele be. Alama ni eksi mara tatu, ai mara tatu.
+Eksi tatu zina samani ya thelathini. Ai tatu zina samani ya tatu.
+Thelathini jumlisha tatu sawa sawa na thelathini na tatu.
+Kwa hiyo, eksi mara tatu, ai mara tatu ni numerali thelathini na tatu.
+Zoezi la tatu.
+Swali la kwanza. Andika numerali zifuatazo kwa Kirumi.
+Kipengele aa, ishirini na tisa.
+Kipengele be, ishirini na sita.
+Kipengele che, thelathini na mbili.
+Kipengele de, ishirini na tatu.
+Tenganisha kila numerali katika makumi na mamoja, badili kila sehemu kuwa alama za Kirumi, kisha unganisha alama hizo.
+Zoezi hili linaendelea katika sehemu inayofuata.
+""",
+    "pg014_gp001_tx001": """
+Zoezi la tatu linaendelea.
+Swali la pili. Andika namba zifuatazo kwa numerali.
+Swali aa. Eksi eksi ai ai.
+Swali be. Eksi eksi eksi ai.
+Swali che. Eksi eksi eksi.
+Swali de. Eksi eksi vi.
+Swali la tatu. Andika namba za Kirumi zinazokosekana katika mipangilio ifuatayo.
+Swali aa. Eksi eksi ai, nafasi wazi, eksi eksi ai ai ai, nafasi wazi, nafasi wazi, eksi eksi vi ai.
+Swali be. Eksi eksi ai vi, nafasi wazi, eksi eksi vi ai, nafasi wazi, nafasi wazi, eksi eksi ai eksi, nafasi wazi, nafasi wazi, nafasi wazi.
+Swali che. Eksi eksi eksi ai ai, nafasi wazi, eksi eksi eksi, nafasi wazi, eksi eksi vi ai ai ai, nafasi wazi, eksi eksi vi ai.
+Swali de. Nafasi wazi, nafasi wazi, eksi eksi vi, nafasi wazi, eksi eksi ai ai ai, eksi eksi ai ai, nafasi wazi.
+Swali la nne. Wanafunzi walipewa kadi zenye namba zifuatazo.
+Jedwali lina safu ya mwanafunzi na safu za kadi zao. John ana kadi eksi eksi ai eksi. Asha ana kadi eksi eksi. Ali ana kadi eksi eksi eksi ai ai. Rose ana kadi eksi vi ai ai.
+Swali aa. Je, nani alipewa kadi yenye namba ya samani kubwa?
+Swali be. Andika kadi yenye namba ya samani kubwa kwa numerali.
+Namba za Kirumi eksi eksi eksi ai vi hadi eli.
+Soma namba zifuatazo.
+Eksi eksi eksi ai vi; eksi eksi eksi vi; eksi eksi eksi vi ai; eksi eksi eksi vi ai ai; eksi eksi eksi vi ai ai ai; eksi eksi eksi ai eksi; eksi eli; eksi eli ai; eksi eli ai ai; eksi eli ai ai ai; eksi eli ai vi; eksi eli vi; eksi eli vi ai; eksi eli vi ai ai; eksi eli vi ai ai ai; eksi eli ai eksi; na eli.
+Mfano wa kwanza. Andika namba zifuatazo kwa Kirumi.
+Swali aa. Thelathini na nne.
+Swali be. Arobaini na moja.
+Swali che. Arobaini na tano.
+Njia.
+Swali aa. Thelathini na nne sawa sawa na eksi eksi eksi jumlisha ai vi, sawa sawa na eksi eksi eksi ai vi. Kwa hiyo, thelathini na nne ni eksi eksi eksi ai vi.
+Swali be. Arobaini na moja sawa sawa na eksi eli jumlisha ai, sawa sawa na eksi eli ai. Kwa hiyo, arobaini na moja ni eksi eli ai.
+Njia ya swali che inaendelea.
+""",
+    "pg015_gp001_tx001": """
+Mfano wa kwanza unaendelea.
+Njia.
+Swali che. Arobaini na tano sawa sawa na arobaini jumlisha tano, sawa sawa na eksi eli vi.
+Mfano wa pili. Andika namba hizi za Kirumi kwa numerali: eksi eksi eksi vi ai ai; eksi eli ai ai ai; na eksi eli ai eksi.
+Njia.
+Swali aa. Eksi eksi eksi vi ai ai sawa sawa na thelathini jumlisha saba, sawa sawa na thelathini na saba.
+Swali be. Eksi eli ai ai ai sawa sawa na arobaini jumlisha tatu, sawa sawa na arobaini na tatu.
+Swali che. Eksi eli ai eksi sawa sawa na arobaini jumlisha tisa, sawa sawa na arobaini na tisa.
+Zoezi la nne.
+Swali la kwanza. Andika namba hizi kwa namba za Kirumi: arobaini na nne, thelathini na tisa, thelathini na tano, na arobaini na sita.
+Swali la pili. Badili namba hizi za Kirumi kuwa numerali: eksi eksi eksi vi ai; eksi eli vi ai ai ai; eksi eli ai; na eksi eksi eksi ai vi.
+Swali la tatu. Jaza nafasi zilizo wazi.
+Swali aa: eksi eksi eksi ai vi, nafasi wazi, eksi eksi eksi vi ai, nafasi wazi, nafasi wazi, eksi eksi eksi ai eksi.
+Swali be: eksi eksi eksi vi ai, eksi eksi eksi vi ai ai ai, nafasi wazi, eksi eli ai ai, eksi eli ai vi, nafasi wazi, nafasi wazi, nafasi wazi.
+Swali che: eli, nafasi wazi, eksi eli ai vi, nafasi wazi, eksi eksi eksi vi ai ai ai, eksi eksi eksi ai ai.
+""",
+    "pg016_gp001_tx001": """
+Zoezi la nne linaendelea.
+Swali la nne. Kamilisha jedwali. Jedwali lina safu nne za kujaza numerali na namba ya Kirumi. Safu ya kwanza ina namba ya Kirumi eksi eksi eksi vi ai, lakini numerali ni nafasi wazi. Safu ya pili ina numerali thelathini na tisa, lakini namba ya Kirumi ni nafasi wazi. Safu ya tatu ina namba ya Kirumi eksi eli ai ai ai, lakini numerali ni nafasi wazi. Safu ya nne ina numerali arobaini na sita, lakini namba ya Kirumi ni nafasi wazi.
+Swali la tano. Jaza nafasi zilizo wazi katika mipangilio.
+Swali aa: eksi eksi eksi ai ai, nafasi wazi, eksi eksi eksi vi ai, nafasi wazi, nafasi wazi.
+Swali be: eksi, nafasi wazi, eksi eksi, eksi eksi vi, nafasi wazi, nafasi wazi, eksi eli.
+Swali che: eli, nafasi wazi, nafasi wazi, nafasi wazi, eksi eksi eksi, eksi eksi vi.
+Swali de: eksi eksi eksi vi, eksi eksi eksi vi ai ai, nafasi wazi, eksi eli ai, nafasi wazi, eksi eli vi.
+Swali la sita. Panga vijiti kuonesha namba arobaini na nane, kisha andika namba yake ya Kirumi.
+Swali la saba. Alama ya barabarani ina namba ya Kirumi eksi eli ai vi. Andika namba hiyo kwa numerali.
+Swali la nane. Andika namba hizi za Kirumi kwa maneno: eksi eli ai eksi; eksi eksi eksi vi ai; eksi eli vi; na eksi eksi eksi vi ai ai.
+Swali la tisa. Andika namba hizi zilizoandikwa kwa maneno kwa namba za Kirumi: arobaini na mbili, thelathini na saba, thelathini na tisa, na arobaini na tatu.
+Swali la kumi. Andika namba hizi za Kirumi kwa maneno: eksi eli ai ai; eksi eksi eksi vi ai ai ai; eksi eksi eksi ai eksi; na eksi eli vi ai ai.
+""",
+    "pg017_gp001_tx001": """
+Namba za Kirumi hamsini hadi mia moja.
+Jedwali la kwanza lina safu tatu: numerali, namba ya Kirumi, na namba kwa maneno.
+Hamsini ni eli. Sitini ni eli eksi. Sabini ni eli eksi eksi. Themanini ni eli eksi eksi eksi. Tisini ni eksi si. Mia moja ni si.
+Alama ai, eksi, na si zinaweza kutumika kutoa au kujumlisha. Samani zake ni moja, kumi, na mia moja.
+Alama ai ikiwekwa kushoto mwa vi au eksi, samani ya ai hutolewa. Mfano, ai vi ni nne, na ai eksi ni tisa.
+Alama eksi ikiwekwa kushoto mwa eli au si, samani ya eksi hutolewa. Mfano, eksi eli ni arobaini, na eksi si ni tisini.
+Jedwali la pili lina mifano kumi ya namba za Kirumi na numerali zake.
+Eli vi ni hamsini na tano.
+Eli ai eksi ni hamsini na tisa.
+Eli eksi eksi eksi ai eksi ni themanini na tisa.
+Eli eksi eksi ai ai ni sabini na mbili.
+Eksi si ai eksi ni tisini na tisa.
+Eli eksi ai vi ni sitini na nne.
+Eli vi ai ai ai ni hamsini na nane.
+Eli eksi ai ni sitini na moja.
+Eli eksi eksi ai ai ai ni sabini na tatu.
+Eli eksi eksi eksi vi ni themanini na tano.
+""",
+    "pg018_gp001_tx001": """
+Mfano wa kwanza. Andika namba hizi za Kirumi kwa maneno: eli eksi vi; eli eksi eksi vi ai; eksi si ai eksi; na eli ai vi.
+Njia.
+Swali aa. Eli eksi vi sawa sawa na sitini jumlisha tano, sawa sawa na sitini na tano.
+Swali be. Eli eksi eksi vi ai sawa sawa na sabini jumlisha sita, sawa sawa na sabini na sita.
+Swali che. Eksi si ai eksi sawa sawa na tisini jumlisha tisa, sawa sawa na tisini na tisa.
+Swali de. Eli ai vi sawa sawa na hamsini jumlisha nne, sawa sawa na hamsini na nne.
+Mfano wa pili. Andika namba hizi kwa namba za Kirumi: hamsini na tatu, sitini na saba, hamsini na saba, na themanini na nane.
+Njia.
+Swali aa. Hamsini na tatu sawa sawa na hamsini jumlisha tatu, sawa sawa na eli ai ai ai.
+Swali be. Sitini na saba sawa sawa na sitini jumlisha saba, sawa sawa na eli eksi vi ai ai.
+Swali che na swali de yanaendelea.
+""",
+    "pg019_gp001_tx001": """
+Mfano wa pili unaendelea.
+Njia.
+Swali che. Hamsini na saba sawa sawa na hamsini jumlisha saba, sawa sawa na eli vi ai ai.
+Swali de. Themanini na nane sawa sawa na themanini jumlisha nane, sawa sawa na eli eksi eksi eksi vi ai ai ai.
+Zoezi la tano.
+Swali la kwanza. Andika namba hizi za Kirumi kwa maneno: eli eksi vi ai ai; eksi si; eli eksi eksi eksi ai ai; na eksi si vi ai ai ai.
+Swali la pili. Andika namba hizi kwa namba za Kirumi: hamsini na mbili, sitini na sita, sabini, na tisini na tatu.
+Swali la tatu. Panga namba hizi za Kirumi kuanzia ndogo hadi kubwa: si; ai; eksi; eli; vi; eli eksi vi; eli eksi eksi eksi vi; eksi si vi; eli vi; na eli eksi eksi vi.
+Swali la nne. Jaza nafasi zilizo wazi: eli eksi eksi eksi, nafasi wazi, eli eksi eksi eksi ai ai, nafasi wazi, eli eksi eksi eksi ai vi, nafasi wazi.
+Namba za Kirumi mia moja hadi mia tano.
+Alama si ina samani ya mia moja, na alama di ina samani ya mia tano.
+Alama si inaweza kurudiwa hadi mara tatu kuonesha mia moja, mia mbili, na mia tatu. Alama si ikiwekwa kushoto mwa di, samani ya si hutolewa kutoka kwa di. Kwa hiyo, si di ni mia nne.
+Mifano ni si di, di si si, na di si si si.
+""",
+    "pg020_gp001_tx001": """
+Namba za Kirumi mia moja hadi mia tano zinaendelea.
+Jedwali la kwanza lina safu tatu: numerali, namba ya Kirumi, na namba kwa maneno.
+Mia moja ni si. Mia mbili ni si si. Mia tatu ni si si si. Mia nne ni si di. Mia tano ni di.
+Jedwali la pili lina mifano kumi ya namba za Kirumi na numerali zake.
+Si ai vi ni mia moja na nne.
+Si eksi ai eksi ni mia moja na kumi na tisa.
+Si eli eksi eksi vi ai ni mia moja sabini na sita.
+Si si eksi eksi ai ai ni mia mbili ishirini na mbili.
+Si si si eksi eli ai ai ai ni mia tatu arobaini na tatu.
+Si si eksi eksi vi ni mia mbili ishirini na tano.
+Si si si eksi eksi eksi vi ai ai ai ni mia tatu thelathini na nane.
+Si di eksi vi ai ai ni mia nne kumi na saba.
+Si si eli ai vi ni mia mbili hamsini na nne.
+Si di eksi eksi eksi ai ni mia nne thelathini na moja.
+""",
+    "pg021_gp001_tx001": """
+Mfano wa kwanza. Andika namba mia mbili na tano, na mia tatu sitini na mbili, kwa namba za Kirumi.
+Njia.
+Swali aa. Mia mbili na tano sawa sawa na mia mbili jumlisha tano, sawa sawa na si si vi.
+Swali be. Mia tatu sitini na mbili sawa sawa na mia tatu jumlisha sitini na mbili, sawa sawa na si si si eli eksi ai ai.
+Mfano wa pili. Andika namba hizi za Kirumi kwa maneno: si eksi vi ai ai; na si di eksi eli vi ai.
+Njia.
+Swali aa. Si eksi vi ai ai ni mia moja kumi na saba.
+Swali be. Si di eksi eli vi ai ni mia nne arobaini na sita.
+Zoezi la sita.
+Swali la kwanza. Andika namba hizi za Kirumi kwa maneno: si si si eksi eksi eksi; si si eksi ai eksi; si di eksi eli vi ai ai; na si si eksi si ai ai.
+Swali la pili. Andika namba hizi zilizoandikwa kwa maneno kwa namba za Kirumi: mia nne arobaini na nne; mia moja kumi na tano; mia mbili na tisa; na mia nne hamsini na nne.
+Swali la tatu. Andika namba hizi kwa namba za Kirumi: mia moja na nane; mia tatu sabini na nne; mia nne thelathini na tano; na mia nne arobaini na mbili.
+Swali la nne. Umbali kati ya miji miwili ni di si eli eksi eksi vi ai ai ai kilometa. Andika umbali huo kwa numerali.
+""",
+    "pg022_gp001_tx001": """
+Namba za Kirumi mia tano hadi elfu moja.
+Alama di ina samani ya mia tano. Alama emu ina samani ya elfu moja. Alama si ikiwekwa kushoto mwa emu, samani ya si hutolewa kutoka kwa emu. Kwa hiyo, si emu ni mia tisa.
+Jedwali la kwanza lina safu tatu: numerali, namba ya Kirumi, na namba kwa maneno.
+Mia tano ni di. Mia sita ni di si. Mia saba ni di si si. Mia nane ni di si si si. Mia tisa ni si emu. Elfu moja ni emu.
+Jedwali la pili lina mifano sita ya namba za Kirumi na numerali zake.
+Di eksi ai ni mia tano kumi na moja.
+Di si si eksi si ai eksi ni mia saba tisini na tisa.
+Di si eli eksi eksi vi ai ni mia sita sabini na nne.
+Si emu eli eksi eksi eksi ai vi ni mia tisa themanini na nne.
+Di eli ni mia tano hamsini.
+Di si si eksi eksi vi ai ai ai ni mia saba ishirini na nane.
+Mfano wa kwanza. Andika namba hizi za Kirumi kwa numerali: si emu ai eksi; na di si si eli eksi eksi ai vi.
+Njia inaendelea.
+""",
+    "pg023_gp001_tx001": """
+Mfano wa kwanza unaendelea.
+Njia.
+Swali aa. Si emu ai eksi sawa sawa na mia tisa jumlisha tisa, sawa sawa na mia tisa na tisa.
+Swali be. Di si si eli eksi eksi ai vi sawa sawa na mia saba jumlisha sabini na nne, sawa sawa na mia saba sabini na nne.
+Mfano wa pili. Andika namba hizi kwa namba za Kirumi: mia tano sabini na sita; mia sita themanini na nane; mia nane arobaini na mbili; na mia tisa sitini na nne.
+Njia.
+Swali aa. Mia tano sabini na sita sawa sawa na mia tano jumlisha sabini na sita, sawa sawa na di eli eksi eksi vi ai.
+Swali be. Mia sita themanini na nane sawa sawa na mia sita jumlisha themanini na nane, sawa sawa na di si eli eksi eksi eksi vi ai ai ai.
+Swali che. Mia nane arobaini na mbili sawa sawa na mia nane jumlisha arobaini na mbili, sawa sawa na di si si si eksi eli ai ai.
+Swali de. Mia tisa sitini na nne sawa sawa na mia tisa jumlisha sitini na nne, sawa sawa na si emu eli eksi ai vi.
+""",
+    "pg024_gp001_tx001": """
+Kazi ya kufanya ya pili.
+Tumia vyanzo vya kuaminika vya mtandaoni, kama Khan Academy, kujifunza zaidi kuhusu namba za Kirumi.
+Zoezi la saba.
+Swali la kwanza. Andika namba hizi za Kirumi kwa maneno: si emu eli eksi eksi ai eksi; di eli eksi eksi vi ai ai ai; si emu eksi si ai vi; na di si si si vi ai.
+Swali la pili. Andika namba hizi zilizoandikwa kwa maneno kwa namba za Kirumi: mia tano hamsini na tisa; mia saba sitini na nne; mia tisa thelathini na mbili; na mia sita sitini na saba.
+Swali la tatu. Andika namba hizi kwa namba za Kirumi: mia tano sabini na mbili; mia sita tisini na nane; mia saba hamsini na tano; na mia tisa kumi na sita.
+Swali la nne. Karol ana kadi iliyoandikwa di eli vi ai ai. Anna ana kadi iliyoandikwa di eksi eli vi ai ai. Taja mwenye kadi yenye namba kubwa zaidi, kisha andika kila namba kwa numerali.
+""",
+    "pg025_gp001_tx001": """
+Jikumbushe.
+Numerali za desimali huundwa kwa tarakimu kumi: sifuri, moja, mbili, tatu, nne, tano, sita, saba, nane, na tisa.
+Hakuna alama ya namba ya Kirumi inayowakilisha sifuri.
+Alama kuu saba za namba za Kirumi ni ai, vi, eksi, eli, si, di, na emu.
+Alama inaweza kurudiwa hadi mara tatu mfululizo.
+Alama vi, eli, na di hazitumiki kutoa.
+Alama ai, eksi, na si zinaweza kutumika kutoa.
+Ai hutolewa tu kutoka kwa vi au eksi. Mifano ni ai vi, ambayo ni nne, na ai eksi, ambayo ni tisa.
+Eksi hutolewa tu kutoka kwa eli au si. Mifano ni eksi eli, ambayo ni arobaini, na eksi si, ambayo ni tisini.
+Si hutolewa tu kutoka kwa di au emu. Mifano ni si di, ambayo ni mia nne, na si emu, ambayo ni mia tisa.
+Alama ai, eksi, na si zinaweza kurudiwa hadi mara tatu. Mifano ni ai ai ai, eksi eksi eksi, na si si si.
+""",
+    "pg026_gp001_tx001": """
+Zoezi la marudio la namba za Kirumi.
+Swali la kwanza. Andika namba hizi za Kirumi kwa maneno: si emu eksi si; di eli eksi ai vi; si emu eli eksi eksi ai; na di si eksi si vi ai ai.
+Swali la pili. Andika namba hizi zilizoandikwa kwa maneno kwa namba za Kirumi: mia sita ishirini na moja; mia nane hamsini na tano; mia nane kumi na nane; na mia tisa hamsini.
+Swali la tatu. Andika namba hizi za Kirumi kwa maneno: eksi si ai; si si eksi si ai ai; di si si si eli eksi eksi ai; na si emu eksi si ai eksi.
+Swali la nne. Barabara ina urefu wa si emu eksi si vi ai kilometa. Andika urefu huo kwa numerali.
+Swali la tano. Kadi ya kwanza ina di si vi ai. Kadi ya pili ina si emu eksi ai. Andika namba kubwa na namba ndogo kwa numerali.
+Swali la sita. Jaza nafasi zilizo wazi.
+Swali aa: si eksi vi, si si eksi eksi eksi, nafasi wazi, nafasi wazi, di eli eksi eksi vi, nafasi wazi, nafasi wazi, nafasi wazi.
+Swali be: di si eksi ai eksi, di si eksi si ai eksi, nafasi wazi, nafasi wazi, nafasi wazi.
+Swali la saba. Panga namba hizi za Kirumi kuanzia ndogo hadi kubwa: eksi si vi; eksi eli vi ai ai; si si ai eksi; si eli ai; eli eksi eksi ai ai ai; si emu vi; si emu eksi si ai ai; ai ai ai; eksi vi; na eksi si ai ai.
+Swali la nane. Umbali kati ya mji E na mji F ni si emu eksi eli ai eksi kilometa. Andika umbali huo kwa numerali.
+""",
+    "pg085_gp001_tx001": """
+Kazi ya kufanya ya kwanza. Kupima mzingo wa mstatili.
+Mchoro unaonesha mstatili wenye pande mbili za urefu na pande mbili za upana.
+Hatua.
+1. Weka alama ya futikamba inayoonesha sifuri kwenye pembe moja ya mstatili.
+2. Pima urefu wa mipaka ya mstatili hadi utakapokutana na alama ulipoanzia.
+3. Soma na andika urefu wa futikamba kwenye makutano na pale ulipoanzia.
+4. Pima urefu wa kila upande wa mstatili kwa kutumia rula kisha andika urefu wa kila upande.
+5. Jumlisha urefu wa pande zote katika hatua ya nne.
+6. Linganisha majibu ya hatua ya tatu na ya tano.
+7. Je, mzunguko wa mstatili una urefu gani?
+8. Urefu wa mzunguko uliopata katika hatua ya saba huitwa mzingo.
+Katika kazi ya kufanya ya kwanza unajifunza kuwa, mzingo wa mstatili ni jumla ya urefu wa pande mbili za urefu na pande mbili za upana.
+Mzingo wa mstatili sawa sawa na urefu jumlisha urefu jumlisha upana jumlisha upana.
+Sawa sawa na mbili zidisha kwa urefu jumlisha mbili zidisha kwa upana.
+Kwa hiyo, mzingo wa mstatili sawa sawa na mbili zidisha kwa urefu jumlisha mbili zidisha kwa upana.
+""",
+    "pg086_gp001_tx001": """
+Mfano wa kwanza. Tafuta mzingo wa mstatili ufuatao.
+Mstatili una urefu wa sentimeta mia moja na upana wa sentimeta arobaini.
+Njia.
+Mzingo wa mstatili sawa sawa na urefu jumlisha upana jumlisha urefu jumlisha upana.
+Sawa sawa na sentimeta mia moja jumlisha sentimeta arobaini jumlisha sentimeta mia moja jumlisha sentimeta arobaini.
+Sawa sawa na sentimeta mia mbili themanini.
+Au, mstatili una pande mbili zenye urefu unaolingana na pande mbili zenye upana unaolingana.
+Mzingo sawa sawa na mbili zidisha kwa urefu jumlisha mbili zidisha kwa upana.
+Mzingo sawa sawa na sentimeta mia moja zidisha kwa mbili jumlisha sentimeta arobaini zidisha kwa mbili.
+Sawa sawa na sentimeta mia mbili jumlisha sentimeta themanini.
+Sawa sawa na sentimeta mia mbili themanini.
+Kwa hiyo, mzingo wa mstatili huo ni sentimeta mia mbili themanini.
+Mfano wa pili. Tafuta mzingo wa mstatili wenye urefu wa meta kumi na tatu na upana wa meta kumi na moja.
+Njia. Urefu sawa sawa na meta kumi na tatu, upana sawa sawa na meta kumi na moja.
+Mzingo sawa sawa na mbili zidisha kwa urefu jumlisha mbili zidisha kwa upana.
+Sawa sawa na meta kumi na tatu zidisha kwa mbili jumlisha meta kumi na moja zidisha kwa mbili.
+Sawa sawa na meta ishirini na sita jumlisha meta ishirini na mbili.
+Sawa sawa na meta arobaini na nane.
+Kwa hiyo, mzingo wa mstatili huo ni meta arobaini na nane.
+""",
+    "pg089_gp001_tx001": """
+Mfano wa pili. Urefu wa upande mmoja wa bustani yenye umbo la mraba ni meta kumi na tatu. Tafuta mzingo wa bustani hiyo.
+Njia. Urefu wa bustani sawa sawa na meta kumi na tatu.
+Mzingo wa bustani sawa sawa na upande mmoja zidisha kwa nne.
+Mzingo wa bustani sawa sawa na meta kumi na tatu zidisha kwa nne.
+Sawa sawa na meta hamsini na mbili.
+Kwa hiyo, mzingo wa bustani ni meta hamsini na mbili.
+Zoezi la pili.
+1. Tafuta mzingo wa kila umbo katika maumbo yafuatayo.
+Kipengele a, mraba wenye upande wa sentimeta arobaini na tano.
+Kipengele b, mraba wenye upande wa meta thelathini na mbili.
+Kipengele c, mraba wenye upande wa meta ishirini na moja.
+Kipengele d, mraba wenye upande wa sentimeta arobaini.
+2. Tafuta mzingo wa mraba wenye urefu wa meta kumi na nane.
+3. Upande mmoja wa mraba ni sentimeta thelathini na saba. Tafuta mzingo wake.
+""",
+    "pg102_gp001_tx001": """
+Zoezi la kwanza.
+1. Tafuta eneo la kila umbo katika maumbo yafuatayo.
+Kipengele a, mstatili wenye urefu wa meta ishirini na upana wa meta nne.
+Kipengele b, mstatili wenye urefu wa sentimeta kumi na nane na upana wa sentimeta nane.
+Kipengele c, mstatili wenye urefu wa sentimeta arobaini na upana wa sentimeta kumi na tano.
+Kipengele d, mstatili wenye urefu wa meta thelathini na tisa na upana wa meta kumi na saba.
+2. Mstatili una urefu wa sentimeta kumi na upana sentimeta tisa. Tafuta eneo la mstatili huo.
+3. Uso wa meza ya mwalimu una urefu wa sentimeta themanini na upana wa sentimeta sitini. Tafuta eneo la uso wa meza hiyo.
+4. Chumba cha darasa kina urefu wa meta saba na upana wa meta sita. Tafuta eneo la sakafu ya darasa hilo.
+5. Juma ana kiwanja chenye urefu wa meta thelathini na tano na upana meta ishirini na sita. Tafuta eneo la kiwanja hicho.
+6. Bustani ina urefu wa meta kumi na tano na upana wa meta nane. Tafuta eneo la bustani hiyo.
+""",
+    "pg115_gp001_tx001": """
+3. Andika sehemu zenye thamani sawa kwa kila kipengele.
+Kipengele a: mbili ya tatu, moja ya mbili, nne ya sita, na tano ya kumi.
+Kipengele b: moja ya nne, moja ya tatu, nne ya kumi na mbili, na tano ya ishirini.
+Kipengele c: sita ya nane, moja ya tano, tatu ya nne, na tano ya ishirini na tano.
+Kipengele d: moja ya nne, moja ya sita, moja ya nane, ishirini na tano ya mia moja, mbili ya kumi na sita, na tatu ya kumi na nane.
+Sehemu zenye thamani tofauti.
+Sehemu zenye thamani tofauti zinaweza kubainishwa kwa kutumia chati ya sehemu. Chunguza mchoro ufuatao.
+Chati inaanza na kitu kizima kimoja. Mistari inayofuata inaonesha nusu mbili, theluthi tatu, robo nne, sehemu tano za tano, sehemu sita za sita, sehemu saba za saba, sehemu nane za nane, sehemu tisa za tisa, sehemu kumi za kumi, sehemu kumi na moja za kumi na moja, na sehemu kumi na mbili za kumi na mbili.
+""",
+    "pg127_gp001_tx001": """
+Kugawanya sehemu zenye asili tofauti.
+Sehemu hugawanywa kwa sehemu, kwanza kwa kubadili asili kuwa kiasi na kiasi kuwa asili ya sehemu inayogawanya. Kisha zidisha sehemu kwa sehemu. Vilevile, sehemu inaweza kugawanywa kwa kutumia mchoro.
+Mfano wa kwanza. Tatu ya nane gawanya kwa nne ya sita.
+Hatua ya kwanza. Badili kiasi na asili ya sehemu nne ya sita inayogawanya; inakuwa sita ya nne.
+Hatua ya pili. Zidisha: tatu ya nane zidisha kwa sita ya nne sawa sawa na kumi na nane ya thelathini na mbili. Sawa sawa na tisa ya kumi na sita.
+Kwa hiyo, jibu ni tisa ya kumi na sita.
+Mfano wa pili. Tumia mchoro kutafuta thamani ya mbili ya tano gawanya kwa moja ya kumi.
+Hatua ya kwanza. Onesha mbili ya tano kwenye mchoro kwa kuchora visanduku vitano vinavyolingana. Kisha paka rangi kwenye visanduku viwili kama ilivyooneshwa kwenye mchoro.
+""",
+    "pg133_gp001_tx001": """
+Umbo hili limegawanywa katika sehemu kumi zilizo sawa. Kila sehemu inawakilisha moja ya kumi ya umbo zima.
+Sehemu iliyotiwa kivuli ni moja ya kumi na huandikwa sifuri nukta moja katika desimali.
+Namba sifuri nukta moja hupatikana baada ya kugawanya moja kwa kumi.
+Desimali zinazoweza kupatikana kutokana na mchoro huo ni:
+Sehemu moja ya kumi ni sifuri nukta moja.
+Mbili ya kumi ni sifuri nukta mbili.
+Tatu ya kumi ni sifuri nukta tatu.
+Nne ya kumi ni sifuri nukta nne.
+Tano ya kumi ni sifuri nukta tano.
+Sita ya kumi ni sifuri nukta sita.
+Saba ya kumi ni sifuri nukta saba.
+Nane ya kumi ni sifuri nukta nane.
+Tisa ya kumi ni sifuri nukta tisa.
+Katika desimali, nukta inatenganisha namba nzima na namba ambayo ni sehemu ya kumi.
+Kusoma desimali. Desimali zina nafasi moja au zaidi. Desimali husomwa kutoka kushoto kuelekea kulia.
+Sifuri nukta saba. Moja nukta nane. Ishirini na tano nukta sita. Mia mbili hamsini nukta moja.
+Desimali zenye nafasi mbili zinaweza kufafanuliwa kwa kutumia mchoro unaofuata.
+""",
+    "pg137_gp001_tx001": """
+Kubadili sehemu kuwa desimali. Desimali hupatikana kwa kugawanya kiasi kwa asili ya sehemu.
+Mfano wa kwanza. Badili sita ya kumi kuwa desimali.
+Hatua ya kwanza. Gawanya kiasi kwa asili: sita gawanya kwa kumi, haitoshelezi. Andika sifuri juu ya sita katika nafasi ya jibu kisha weka nukta.
+Hatua ya pili. Zidisha: sifuri zidisha kwa kumi sawa sawa na sifuri. Andika sifuri chini ya sita kisha toa: sita toa sifuri sawa sawa na sita.
+Hatua ya tatu. Andika sifuri mbele ya sita katika kigawanye na kuwa sitini, kisha gawanya: sitini gawanya kwa kumi sawa sawa na sita. Andika sita sehemu ya jibu baada ya nukta.
+Hatua ya nne. Zidisha: sita zidisha kwa kumi sawa sawa na sitini. Andika sitini chini ya sitini kisha toa: sitini toa sitini sawa sawa na sifuri.
+Kwa hiyo, sita ya kumi sawa sawa na sifuri nukta sita.
+Mfano wa pili. Badili moja ya mbili kuwa desimali.
+Hatua ya kwanza. Gawanya moja kwa mbili, haitoshelezi. Andika sifuri juu ya moja katika nafasi ya jibu kisha weka nukta.
+Hatua ya pili. Sifuri zidisha kwa mbili sawa sawa na sifuri. Andika sifuri chini ya moja kisha toa: moja toa sifuri sawa sawa na moja.
+Hatua ya tatu. Andika sifuri mbele ya moja katika kigawanye na kuwa kumi, kisha gawanya: kumi gawanya kwa mbili sawa sawa na tano. Andika tano baada ya nukta.
+Hatua ya nne. Tano zidisha kwa mbili sawa sawa na kumi. Kumi toa kumi sawa sawa na sifuri.
+Kwa hiyo, moja ya mbili sawa sawa na sifuri nukta tano.
+""",
+    "pg138_gp001_tx001": """
+Mfano wa tatu. Badili moja ya mia moja kuwa desimali.
+Hatua ya kwanza. Gawanya moja kwa mia moja, haitoshelezi. Andika sifuri juu ya moja kwenye nafasi ya jibu kisha weka nukta.
+Hatua ya pili. Sifuri zidisha kwa mia moja sawa sawa na sifuri. Andika sifuri chini ya moja kisha toa: moja toa sifuri sawa sawa na moja.
+Hatua ya tatu. Andika sifuri mbele ya moja ili kupata kumi, kisha gawanya kumi kwa mia moja. Haitoshelezi. Andika sifuri kulia kwa nukta, kisha weka sifuri mbele ya kumi ili kupata mia moja.
+Hatua ya nne. Gawanya mia moja kwa mia moja ili kupata moja. Andika moja katika nafasi ya jibu kupata sifuri nukta sifuri moja.
+Hatua ya tano. Moja zidisha kwa mia moja sawa sawa na mia moja. Mia moja toa mia moja sawa sawa na sifuri.
+Kwa hiyo, moja ya mia moja sawa sawa na sifuri nukta sifuri moja.
+Zoezi la tatu. Badili sehemu zifuatazo kuwa desimali.
+1. Kipengele a, tatu ya kumi. Kipengele b, nane ya kumi. Kipengele c, saba ya kumi. Kipengele d, kumi na mbili ya kumi.
+2. Kipengele a, moja ya tano. Kipengele b, mbili ya tano. Kipengele c, tatu ya mbili. Kipengele d, saba ya tano.
+3. Kipengele a, tatu ya mia moja. Kipengele b, kumi na tano ya mia moja. Kipengele c, sabini na sita ya mia moja. Kipengele d, themanini na tatu ya mia moja.
+4. Kipengele a, moja ya ishirini na tano. Kipengele b, moja ya nne. Kipengele c, tatu ya nne. Kipengele d, tano ya nne.
+5. Kipengele a, sita ya mia moja. Kipengele b, mia moja nane ya mia moja. Kipengele c, mia moja sabini na sita ya mia moja. Kipengele d, ishirini na saba ya mia moja.
+""",
+    "pg152_gp001_tx001": (
+        "Uhusiano wa vipimo vya muda. Mwaka mmoja ni wiki hamsini na mbili. Mwaka mmoja ni miezi kumi na miwili. "
+        "Mwaka mrefu una siku mia tatu sitini na sita. Mwaka mfupi una siku mia tatu sitini na tano. "
+        "Kugawanya hutumika wakati wa kubadili kipimo kidogo kwenda kikubwa, na kuzidisha hutumika wakati wa kubadili kipimo kikubwa kwenda kidogo. "
+        "Mfano wa kwanza. Kuna dakika ngapi katika sekunde mia saba ishirini? Njia. Dakika moja ni sekunde sitini. "
+        "Sekunde mia saba ishirini gawanya kwa sitini, sawa sawa na dakika kumi na mbili. "
+        "Kwa hiyo, kuna dakika kumi na mbili katika sekunde mia saba ishirini. "
+        "Mfano wa pili. Mwanafunzi hutumia dakika kumi na tano kutoka nyumbani kwenda shuleni. Badili muda huo kuwa katika saa. "
+        "Njia. Saa moja ni dakika sitini. Dakika kumi na tano gawanya kwa sitini, sawa sawa na sehemu kumi na tano ya sitini ya saa. "
+        "Kwa hiyo, dakika kumi na tano ni sawa na sehemu kumi na tano ya sitini ya saa. "
+        "Mfano wa tatu. Kuna dakika ngapi katika saa sabini na mbili? Njia. Saa moja ni dakika sitini. "
+        "Saa sabini na mbili zidisha kwa sitini, sawa sawa na dakika elfu nne mia tatu ishirini. "
+        "Kwa hiyo, kuna dakika elfu nne mia tatu ishirini katika saa sabini na mbili."
+    ),
+    "pg171_gp001_tx001": (
+        "Kuzidisha fedha katika shilingi na senti. Fedha ya Tanzania katika shilingi na senti inaweza kuzidishwa kwa namba nzima. "
+        "Tendo la kuzidisha linafanyika kuanzia upande wa senti kuelekea upande wa shilingi. "
+        "Uhusiano wa shilingi na senti hutumika wakati wa kubadili kiasi cha senti kuwa shilingi. "
+        "Kumbuka kuwa senti huandikwa kwa tarakimu mbili, pia shilingi moja ni sawa na senti mia moja. "
+        "Mfano wa kwanza. Zidisha shilingi hamsini na senti tano kwa sita. "
+        "Hatua ya kwanza. Zidisha senti tano kwa sita. Senti tano zidisha kwa sita, sawa sawa na senti thelathini. "
+        "Andika thelathini katika nafasi ya senti. "
+        "Hatua ya pili. Zidisha shilingi hamsini kwa sita. Shilingi hamsini zidisha kwa sita, sawa sawa na shilingi mia tatu. "
+        "Andika mia tatu katika nafasi ya shilingi. "
+        "Kwa hiyo, jibu ni shilingi mia tatu na senti thelathini, au shilingi mia tatu nukta senti thelathini."
+    ),
+}
+
+
 def source_text(data_id: str, texts: dict[str, str]) -> str:
+    if data_id in PAGE_NARRATION_OVERRIDES:
+        return PAGE_NARRATION_OVERRIDES[data_id]
     if data_id in SEMANTIC_PAGE_AUDIO:
         return SEMANTIC_PAGE_AUDIO[data_id]
-    value = page_source(data_id) or texts[data_id]
+    if data_id in ROMAN_READING_ORDER_IDS:
+        value = texts[data_id]
+    else:
+        value = page_source(data_id) or semantic_html_source(data_id) or texts[data_id]
     if data_id == "pg115_gp001_tx001" and "Chunguza mchoro ufuatao." in value:
         value = value.split("Chunguza mchoro ufuatao.", 1)[0]
         value += (
@@ -502,3 +1746,8 @@ if __name__ == "__main__":
         sys.path.insert(0, str(dependency))
     import edge_tts
     main()
+
+
+
+
+

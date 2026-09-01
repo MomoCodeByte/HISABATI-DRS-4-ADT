@@ -356,4 +356,79 @@
     startVisibleNarration();
   }
 })();
+/* Keep Rehema controls accessible and useful across page navigation. */
+(() => {
+  const labels = {
+    back: 'Rudisha sauti sekunde 10',
+    play: 'Cheza au sitisha sauti',
+    forward: 'Rusha sauti mbele sekunde 10',
+    stop: 'Simamisha sauti',
+    speed: 'Chagua kasi ya kusoma',
+    volume: 'Badili kiwango cha sauti'
+  };
 
+  const buttonForIcon = (className) => {
+    const icon = document.querySelector('svg.' + className);
+    return icon ? icon.closest('button') : null;
+  };
+
+  const labelButton = (button, label) => {
+    if (!button) return;
+    button.setAttribute('aria-label', label);
+    button.setAttribute('title', label);
+  };
+
+  const repairAudioControls = () => {
+    const back = buttonForIcon('lucide-skip-back');
+    const forward = buttonForIcon('lucide-skip-forward');
+    const play = buttonForIcon('lucide-play') || buttonForIcon('lucide-pause');
+    const stop = buttonForIcon('lucide-square');
+    const speed = document.querySelector('button[aria-label^="Kasi ya kucheza"]');
+    const volume = document.querySelector('button[aria-label^="Sauti:"]');
+
+    labelButton(back, labels.back);
+    labelButton(play, labels.play);
+    labelButton(forward, labels.forward);
+    labelButton(stop, labels.stop);
+    labelButton(speed, labels.speed);
+    labelButton(volume, labels.volume);
+
+  };
+
+  let scheduled = false;
+  const scheduleAudioControlRepair = () => {
+    if (scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(() => {
+      scheduled = false;
+      repairAudioControls();
+    });
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', repairAudioControls, { once: true });
+  } else {
+    repairAudioControls();
+  }
+
+  new MutationObserver(scheduleAudioControlRepair).observe(document.documentElement, {
+    childList: true,
+    subtree: true
+  });
+})();
+
+(function keepBlankPageSixSilent() {
+  const removePageSixNarrationHook = () => {
+    if (!/(?:^|\/)pg006_sec001\.html$/i.test(window.location.pathname)) return;
+    document
+      .querySelectorAll('.page-narration-hook[data-id="pg006_gp001_tx001"]')
+      .forEach((hook) => hook.remove());
+  };
+
+  removePageSixNarrationHook();
+  new MutationObserver(removePageSixNarrationHook).observe(document.documentElement, {
+    childList: true,
+    subtree: true,
+  });
+  window.addEventListener('pageshow', removePageSixNarrationHook);
+})();

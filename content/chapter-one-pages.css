@@ -453,3 +453,29 @@
     font-size: 1.04em;
   }
 }
+
+
+/* Page 12 red seconds hand from the source clock */
+.page-12 .clock-face .second-hand {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 2px;
+  height: 36%;
+  background: #e85157;
+  transform: translate(-50%, -100%);
+  transform-origin: 50% 100%;
+  z-index: 4;
+}
+.page-12 .clock-face .second-hand::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 100%;
+  width: 2px;
+  height: 16px;
+  background: #e85157;
+}
+.page-12 .clock-face .pin {
+  z-index: 5;
+}

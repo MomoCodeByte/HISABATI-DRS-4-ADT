@@ -1,14 +1,8 @@
 {
   "voice": "sw-TZ-RehemaNeural",
   "rate": "-30%",
-  "version": "v16",
-  "audioFiles": 223,
-  "regeneratedAudioFiles": 30,
-  "spatialPageNarration": true,
-  "verifiedMp3Files": 223,
-  "chapterSevenPagesChecked": 20,
-  "pronunciationIssues": 0,
-  "legitimateMkatoPages": [
-    "pg093_gp001_tx001"
-  ]
+  "version": "v31",
+  "audioFiles": 1,
+  "regeneratedAudioFiles": 1,
+  "spatialPageNarration": true
 }

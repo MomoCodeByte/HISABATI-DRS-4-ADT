@@ -13,3 +13,7 @@
   background: #fff !important;
   border: 0 !important;
 }
+
+.page-1 .certificate-figure{width:58%;margin:.35em auto 0}.page-1 .certificate-figure .approval-certificate{width:100%;margin:0 auto}
+
+.page-5 .library-link a{color:inherit;text-decoration:underline;text-decoration-thickness:.06em;text-underline-offset:.12em}.page-5 .qr-figure{display:grid;grid-template-columns:5.2em 1fr;align-items:center;gap:.75em;max-width:68%;margin:0 0 0 .2em}.page-5 .qr-figure .qr-code{width:100%;margin:0}.page-5 .qr-description{margin:0;color:#303030;font-size:.68em;line-height:1.25;text-align:left}.page-5 .qr-description strong{color:#4f9146}

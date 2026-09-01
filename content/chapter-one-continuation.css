@@ -224,6 +224,13 @@
 
 .page-14 .exercise-box { min-height: 25.3em; padding: 1em .65em; margin-bottom: 1.15em; }
 .page-14 .people-table { margin: .25em 0; }
+.page-14 .people-table th:first-child { width: 22%; }
+.page-14 .people-table th,
+.page-14 .people-table td {
+  box-sizing: border-box;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
 .page-14 .section-title,
 .page-14 .section-copy { margin-left: -1.1em; }
 .page-14 .section-copy { line-height: 1.42; }
@@ -237,14 +244,41 @@
 .page-16 .fill-table { width: 95%; margin: .35em auto .8em; }
 .page-16 .fill-table th { width: 31%; }
 
-.page-17 .first-table { margin-bottom: .8em; }
-.page-17 .first-table th { width: 5.45em; }
-.page-17 .first-table td { height: 2.05em; }
+.page-17 .first-table {
+  margin-bottom: .8em;
+  font-size: .82em;
+}
+.page-17 .first-table th {
+  width: 7.2em;
+  padding-right: .3em;
+  padding-left: .3em;
+}
+.page-17 .first-table td {
+  height: 2.05em;
+  padding-right: .12em;
+  padding-left: .12em;
+  overflow-wrap: anywhere;
+}
 .page-17 .rule-copy { line-height: 1.4; margin-bottom: .55em; text-align: justify; }
 .page-17 .second-table { margin-top: .35em; font-size: .92em; }
 .page-17 .second-table th:nth-child(1) { width: 35%; }
 .page-17 .second-table th:nth-child(2) { width: 39%; }
 .page-17 .second-table td { padding: .15em .38em; }
+
+.page-23 .continuation-box .box-body > strong:first-child {
+  display: block;
+  margin-bottom: .35em;
+}
+.page-23 .example-two .box-body > p:not(:first-child) {
+  margin: .55em 0;
+  padding-left: .15em;
+}
+.page-23 .example-two .equation {
+  display: block;
+  padding-left: 3.7em;
+  line-height: 1.42;
+  text-align: left;
+}
 
 .page-18 .example-one { min-height: 28.9em; margin-left: -1.1em; width: calc(100% + 2.2em); }
 .page-18 .worked-list { margin-top: .6em; }
