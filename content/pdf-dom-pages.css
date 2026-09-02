@@ -76,3 +76,67 @@
   background: #fff !important;
   border: 0 !important;
 }
+
+/* chapter3-division-fixes:start */
+.chapter3-long-division,
+.chapter3-short-division {
+  position: absolute;
+  z-index: 30;
+  display: inline-flex;
+  align-items: baseline;
+  height: 19px;
+  padding: 1px 3px 2px 1px;
+  box-sizing: border-box;
+  background: #fff;
+  box-shadow: 0 0 0 3px #fff;
+  color: #000;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 16px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.pdf-dom-text .chapter3-long-division__bracket {
+  display: inline-block;
+  margin-right: 1px;
+  line-height: 16px;
+}
+.pdf-dom-text .chapter3-long-division__dividend {
+  position: relative;
+  display: inline-block;
+  min-width: 1.05em;
+  padding: 0 1px;
+  border: 0;
+  text-align: center;
+}
+.pdf-dom-text .chapter3-short-division .chapter3-long-division__dividend::after,
+.pdf-dom-text .chapter3-long-division .chapter3-long-division__dividend::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1px solid currentColor;
+}
+.pdf-dom-text .chapter3-short-division .chapter3-long-division__dividend::after {
+  bottom: -2px;
+}
+.pdf-dom-text .chapter3-long-division .chapter3-long-division__dividend::before {
+  top: -2px;
+}
+.chapter3-inline-division {
+  position: absolute;
+  z-index: 32;
+  display: inline-block;
+  padding: 1px 3px;
+  background: #fff;
+  box-shadow: 0 0 0 2px #fff;
+  color: #000;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 16px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+/* chapter3-division-fixes:end */

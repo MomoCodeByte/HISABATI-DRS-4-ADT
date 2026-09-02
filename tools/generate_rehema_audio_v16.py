@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 LOCALE = ROOT / "content" / "i18n" / "sw-TZ"
 VOICE = "sw-TZ-RehemaNeural"
 RATE = "-30%"
-VERSION = "v38"
+VERSION = "v40"
 
 ONES = ("sifuri", "moja", "mbili", "tatu", "nne", "tano", "sita", "saba", "nane", "tisa")
 TENS = {10: "kumi", 20: "ishirini", 30: "thelathini", 40: "arobaini",
@@ -29,6 +29,10 @@ ROMAN = {"I": "ai", "V": "vi", "X": "eksi", "L": "eli", "C": "si", "D": "di", "M
 UNITS = {"mm": "milimeta", "sm": "sentimeta", "dm": "desimeta", "km": "kilometa",
          "kg": "kilogramu", "mg": "miligramu", "ml": "mililita", "m": "meta",
          "g": "gramu", "l": "lita", "t": "tani", "sh": "shilingi", "st": "senti"}
+DIGIT_WORD_VALUES = {
+    "sifuri": 0, "moja": 1, "mbili": 2, "tatu": 3, "nne": 4,
+    "tano": 5, "sita": 6, "saba": 7, "nane": 8, "tisa": 9,
+}
 SPAN_RE = re.compile(r'<span class="pdf-span" style="(?P<style>[^"]*)">(?P<text>.*?)</span>', re.S)
 
 ROMAN_READING_ORDER_IDS = {
@@ -362,6 +366,97 @@ def add_pauses(value: str) -> str:
     return re.sub(r"(?:\.\s*){2,}", ". ", value).lstrip(". ")
 
 
+def clean_existing_narration(value: str, data_id: str = "") -> str:
+    """Repair speech text without changing any visible textbook content."""
+    value = html.unescape(value).replace("\x07", " ")
+
+    # PDF line breaks sometimes became full stops in the middle of a phrase.
+    joiners = (
+        r"ya|wa|na|kwa|katika|ili|kisha|ambayo|ambalo|ambazo|yenye|zenye|"
+        r"kutoka|hadi"
+    )
+    value = re.sub(
+        rf"\b({joiners})\.\s+(?=[A-Za-zÀ-ÿ])",
+        r"\1 ",
+        value,
+        flags=re.I,
+    )
+    value = re.sub(
+        r"\b(Zoezi la|Mfano wa|Kazi ya kufanya ya)\s+(kumi)\.\s+na\s+"
+        r"(moja|mbili|tatu|nne|tano|sita|saba|nane|tisa)\b",
+        r"\1 \2 na \3",
+        value,
+        flags=re.I,
+    )
+
+    # Numbered steps should sound like ordered instructions, not fragments.
+    step_ordinals = {
+        "moja": "kwanza", "mbili": "pili", "tatu": "tatu", "nne": "nne",
+        "tano": "tano", "sita": "sita", "saba": "saba", "nane": "nane",
+        "tisa": "tisa", "kumi": "kumi",
+    }
+    for number, ordinal in step_ordinals.items():
+        value = re.sub(
+            rf"\bHatua\.\s*(?:ya\s+)?{number}\b[.:]?",
+            f"Hatua ya {ordinal}. ",
+            value,
+            flags=re.I,
+        )
+
+    # An equals sign followed by a blank answer must not be spoken as an
+    # unfinished phrase. The calculation itself is still narrated.
+    dangling = r"sawa sawa na|jumlisha|toa|zidisha kwa|gawanya kwa"
+    value = re.sub(
+        rf"\s+(?:{dangling})\s*(?=[.!?](?:\s|$)|$)",
+        "",
+        value,
+        flags=re.I,
+    )
+    value = re.sub(r"(?:sawa sawa na\s+){2,}", "sawa sawa na ", value, flags=re.I)
+    value = re.sub(r"\bjumlisha\s+Gawanya\b", "Gawanya", value, flags=re.I)
+
+    # Parentheses are visual grouping marks. Pauses are clearer than reading
+    # raw bracket names, while the words inside the brackets are preserved.
+    value = value.replace("(", ", ").replace(")", ", ")
+
+    # In money contexts, two decimal digits are cents rather than a generic
+    # decimal sequence: "shilingi 80 nukta 75" -> "... na senti 75".
+    digit_words = "|".join(DIGIT_WORD_VALUES)
+    money_decimal = re.compile(
+        rf"(\bshilingi\b[^.!?]{{0,150}}?)\s+nukta\s+({digit_words})\s+({digit_words})\b",
+        re.I,
+    )
+
+    def money_decimal_words(match: re.Match[str]) -> str:
+        tens = DIGIT_WORD_VALUES[match.group(2).lower()]
+        ones = DIGIT_WORD_VALUES[match.group(3).lower()]
+        return match.group(1).rstrip() + " na senti " + number_words(tens * 10 + ones)
+
+    value = money_decimal.sub(money_decimal_words, value)
+
+    # Coordinate extraction occasionally flattened a superscript 2 or 3 into
+    # an ordinary word. Restore its mathematical meaning only in an explicit
+    # area or volume sentence.
+    metric = r"sentimeta|milimeta|kilometa|meta"
+    value = re.sub(
+        rf"(\beneo\b[^.!?]{{0,180}}?\b)({metric})\s+mbili\b",
+        lambda match: match.group(1) + match.group(2) + " za mraba",
+        value,
+        flags=re.I,
+    )
+    value = re.sub(
+        rf"(\bujazo\b[^.!?]{{0,180}}?\b)({metric})\s+tatu\b",
+        lambda match: match.group(1) + match.group(2) + " za ujazo",
+        value,
+        flags=re.I,
+    )
+
+    value = value.replace("?.", "?").replace("!.", "!")
+    value = re.sub(r"\s+([,.;:!?])", r"\1", value)
+    value = re.sub(r"(?:\.\s*){2,}", ". ", value)
+    return re.sub(r"\s+", " ", value).strip()
+
+
 ADT_ROMAN_VALUES = {"I": 1, "V": 5, "X": 10, "L": 50, "C": 100, "D": 500, "M": 1000}
 ADT_LETTER_PRONUNCIATIONS = {"A": "aa", "B": "be", "C": "che", "D": "de"}
 ADT_SPOKEN_ROMAN_TOKENS = {
@@ -415,7 +510,8 @@ def adt_spoken_roman_to_words(match: re.Match) -> str:
 
 
 def spoken(value: str, data_id: str = "") -> str:
-    value = html.unescape(value).replace("\x07", " ").replace("�", " toa ")
+    value = clean_existing_narration(value, data_id)
+    value = value.replace("�", " toa ")
     page_match = re.match(r"pg(\d{3})_", data_id or "")
     page_number = int(page_match.group(1)) if page_match else 0
     for option, pronunciation in ADT_LETTER_PRONUNCIATIONS.items():
@@ -554,6 +650,12 @@ def spoken(value: str, data_id: str = "") -> str:
             flags=re.IGNORECASE,
         )
     if 169 <= page_number <= 184:
+        value = re.sub(
+            r"\bshilingi\s+([\d,]+)\.(\d{2})\b",
+            lambda match: f"shilingi {match.group(1)} na senti {match.group(2)}",
+            value,
+            flags=re.IGNORECASE,
+        )
         value = re.sub(
             r"\)\s*sh\s+st\s+(\d+)\s+(\d+)\s+(\d+)",
             lambda match: f"sh {match.group(2)} st {match.group(3)} ÷ {match.group(1)}",
@@ -757,6 +859,7 @@ def spoken(value: str, data_id: str = "") -> str:
     value = re.sub(r"(?<!\d)(\d+)\s*/\s*(\d+)(?!\d)",
                    lambda m: fraction_words(int(m.group(1)), int(m.group(2))), value)
 
+    value = value.replace("%", " asilimia ")
     value = value.replace("×", " zidisha kwa ").replace("÷", " gawanya kwa ")
     value = value.replace("+", " jumlisha ").replace("−", " toa ").replace("–", " toa ")
     value = re.sub(r"(?<=\d)\s*-\s*(?=\d)", " toa ", value)
@@ -778,6 +881,12 @@ def spoken(value: str, data_id: str = "") -> str:
     value = re.sub(r"_+", " dashi ", value)
     value = re.sub(r"\s*-\s*", " dashi ", value)
     value = add_pauses(value)
+    value = re.sub(
+        r"\s+(?:sawa sawa na|jumlisha|toa|zidisha kwa|gawanya kwa)\s*(?=[.!?](?:\s|$)|$)",
+        "",
+        value,
+        flags=re.I,
+    )
     value = re.sub(r"\s+,", ",", value)
     value = re.sub(r",\s*", ", ", value)
     return re.sub(r"\s+", " ", value).strip()
@@ -1634,16 +1743,101 @@ Zoezi la tatu. Badili sehemu zifuatazo kuwa desimali.
     ),
 }
 
+PAGE_NARRATION_OVERRIDES.update({
+    "pg043_gp001_tx001": """
+Mfano wa pili. Mia mbili arobaini na tano gawanya kwa tano sawa sawa na arobaini na tisa.
+Hatua ya kwanza. Gawanya mbili kwa tano, haitoshelezi.
+Hatua ya pili. Chukua ishirini na nne gawanya kwa tano, unapata nne baki nne. Andika nne katika nafasi ya makumi. Badili nne iliyobaki kuwa mamoja arobaini.
+Hatua ya tatu. Jumlisha mamoja: arobaini jumlisha tano sawa sawa na arobaini na tano. Gawanya arobaini na tano kwa tano, unapata tisa. Andika tisa katika nafasi ya mamoja kulia kwa nne.
+Kwa hiyo, mia mbili arobaini na tano gawanya kwa tano sawa sawa na arobaini na tisa.
+Mfano wa tatu. Mia mbili themanini na nne gawanya kwa mbili sawa sawa na mia moja arobaini na mbili.
+Njia. Hatua ya kwanza. Gawanya mbili kwa mbili, unapata moja. Andika moja katika nafasi ya mamia.
+Hatua ya pili. Gawanya nane kwa mbili, unapata nne. Andika nne katika nafasi ya makumi kulia kwa moja.
+Hatua ya tatu. Gawanya nne kwa mbili, unapata mbili. Andika mbili katika nafasi ya mamoja kulia kwa nne.
+Kwa hiyo, jibu ni mia moja arobaini na mbili.
+Mfano wa nne. Mia tatu themanini na nne gawanya kwa kumi na mbili sawa sawa na thelathini na mbili.
+Njia. Hatua ya kwanza. Gawanya tatu kwa kumi na mbili, haitoshelezi. Hivyo, chukua thelathini na nane gawanya kwa kumi na mbili, unapata tatu baki mbili. Andika tatu katika nafasi ya makumi.
+""",
+    "pg106_gp001_tx001": """
+Katika Kazi ya kufanya ya pili umejifunza kuwa eneo la pembetatu linapatikana kwa kuhesabu idadi ya miraba midogo. Hivyo, eneo la pembetatu hupatikana kwa kuchukua nusu ya eneo la mraba au mstatili.
+Kwa hiyo, eneo la pembetatu sawa sawa na nusu zidisha kwa kitako zidisha kwa kimo.
+Mfano wa kwanza. Tafuta eneo la pembetatu pe ku re.
+Mchoro unaonesha pembetatu pe ku re yenye kitako ku re cha sentimeta kumi na kimo ku pe cha sentimeta saba.
+Njia. Kitako ku re sawa sawa na sentimeta kumi. Kimo ku pe sawa sawa na sentimeta saba.
+Eneo la pembetatu sawa sawa na nusu zidisha kwa kitako zidisha kwa kimo.
+Sawa sawa na nusu zidisha kwa sentimeta kumi zidisha kwa sentimeta saba.
+Sawa sawa na sentimeta za mraba thelathini na tano.
+Kwa hiyo, eneo la pembetatu pe ku re ni sentimeta za mraba thelathini na tano.
+""",
+    "pg107_gp001_tx001": """
+Mfano wa pili. Ikiwa kimo cha pembetatu ni meta kumi na tano na kitako chake ni meta thelathini, tafuta eneo la pembetatu.
+Njia. Kimo cha pembetatu sawa sawa na meta kumi na tano. Kitako cha pembetatu sawa sawa na meta thelathini.
+Eneo la pembetatu sawa sawa na nusu zidisha kwa kitako zidisha kwa kimo.
+Sawa sawa na nusu zidisha kwa meta thelathini zidisha kwa meta kumi na tano.
+Sawa sawa na meta za mraba mia mbili ishirini na tano.
+Kwa hiyo, eneo la pembetatu ni meta za mraba mia mbili ishirini na tano.
+Mfano wa tatu. Tafuta eneo la pembetatu ke le me.
+Mchoro unaonesha pembetatu ke le me yenye kitako ke me cha sentimeta ishirini na sita na kimo cha sentimeta kumi na mbili.
+Njia. Kitako ke me sawa sawa na sentimeta ishirini na sita. Kimo sawa sawa na sentimeta kumi na mbili.
+Eneo la pembetatu ke le me sawa sawa na nusu zidisha kwa kitako zidisha kwa kimo.
+Sawa sawa na nusu zidisha kwa sentimeta ishirini na sita zidisha kwa sentimeta kumi na mbili.
+""",
+    "pg108_gp001_tx001": """
+Mfano wa tatu unaendelea. Sentimeta ishirini na sita zidisha kwa sentimeta kumi na mbili, kisha gawanya kwa mbili, sawa sawa na sentimeta za mraba mia moja hamsini na sita.
+Kwa hiyo, eneo la pembetatu ke le me ni sentimeta za mraba mia moja hamsini na sita.
+Zoezi la tatu.
+Swali la kwanza. Tafuta eneo la kila umbo katika maumbo yafuatayo.
+Kipengele aa. Pembetatu aa be che ina kitako de che cha sentimeta kumi na nane na kimo be de cha sentimeta kumi na nne.
+Kipengele be. Pembetatu ze le me ina kitako ze le cha sentimeta ishirini na nne na kimo cha sentimeta kumi na tisa.
+Kipengele che. Pembetatu re se te ina kitako re se cha meta kumi na kimo re te cha meta kumi.
+Kipengele de. Pembetatu emu ne le ina kitako emu le cha sentimeta tano na kimo cha sentimeta ishirini.
+Swali la pili. Uso wa meza ya pembetatu una kimo cha meta sita na kitako cha meta tatu. Tafuta eneo la meza hiyo.
+Swali la tatu. Tafuta eneo la alama ya barabarani yenye umbo la pembetatu, ikiwa kitako chake ni sentimeta arobaini na kimo chake ni sentimeta hamsini na tano.
+""",
+    "pg183_gp001_tx001": """
+Kazi ya kufanya. Kujifunza miamala ya fedha ya Tanzania kwa njia ya masomo ya mtandaoni.
+Maelezo. Tumia huduma na masomo ya mtandaoni kujifunza zaidi jinsi ya kufanya miamala ya fedha ya Tanzania inayohusu kuzidisha na kugawanya fedha.
+Jikumbushe. Moja. Unapotenga shilingi na senti katika tarakimu, senti huandikwa kwa tarakimu mbili. Mbili. Kuzidisha fedha, anza na senti kisha shilingi. Tatu. Unapogawanya fedha, anza na shilingi kisha senti.
+Zoezi la marudio.
+Swali la kwanza. Shilingi mia saba sitini na nne zidisha kwa sita.
+Swali la pili. Shilingi elfu tano mia sita sabini na tano na senti thelathini na tisa zidisha kwa nane.
+Swali la tatu. Shilingi mia moja tisini na senti tisini zidisha kwa tisa.
+Swali la nne. Shilingi elfu arobaini na tano mia tatu thelathini na senti themanini zidisha kwa ishirini na nane.
+Swali la tano. Shilingi elfu tatu mia tano zidisha kwa tisa.
+Swali la sita. Shilingi elfu thelathini na tisa mia nane hamsini na senti sabini na saba zidisha kwa sabini na tisa.
+Swali la saba. Shilingi mia moja tisini na nane na senti tisini na sita zidisha kwa sitini na tisa.
+Swali la nane. Shilingi elfu sitini na saba mia sita sabini na nane na senti hamsini na mbili gawanya kwa ishirini na sita.
+Swali la tisa. Shilingi elfu arobaini na tano mia tatu sitini na senti tisini na sita gawanya kwa sita.
+""",
+    "pg184_gp001_tx001": """
+Zoezi la marudio linaendelea.
+Swali la kumi. Shilingi elfu kumi na mbili mia nne gawanya kwa nne.
+Swali la kumi na moja. Shilingi elfu sabini na tano mia tano gawanya kwa ishirini.
+Swali la kumi na mbili. Shilingi elfu arobaini na nne mia mbili themanini na nne na senti kumi na nne gawanya kwa kumi na nane.
+Swali la kumi na tatu. Shilingi elfu tisini na tano mia nne sitini na senti thelathini na saba gawanya kwa kumi na tisa.
+Swali la kumi na nne. Shilingi elfu saba mia sita hamsini na tatu na senti sitini na mbili gawanya kwa kumi na tatu.
+Swali la kumi na tano. Shilingi elfu kumi na tisa na saba na senti sitini na sita gawanya kwa kumi na nne.
+Swali la kumi na sita. Daftari moja linauzwa kwa bei ya shilingi mia tano na senti thelathini. Je, ni kiasi gani cha fedha kinahitajika kununua madaftari nane ya aina hiyo?
+Swali la kumi na saba. Mpira unauzwa kwa bei ya shilingi elfu nane na senti ishirini na tano. Itagharimu kiasi gani cha fedha kununua mipira minne ya aina hiyo?
+Swali la kumi na nane. Kiasi cha shilingi elfu moja mia mbili na senti sabini na tano kilitumika kununua kalamu tatu zenye bei sawa. Je, kalamu moja iliuzwa kwa shilingi ngapi?
+Swali la kumi na tisa. Mwanafunzi alinunua madaftari tisa kwa shilingi elfu moja mia nane na tisa na senti arobaini na tano. Je, daftari moja liligharimu kiasi gani cha fedha ikiwa madaftari yote yalinunuliwa kwa bei sawa?
+Swali la ishirini. Mshahara wa mtumishi ni shilingi laki saba na elfu sabini na tano mia tatu hamsini na tano na senti ishirini na tatu kwa mwezi. Ni kiasi gani cha mshahara mtumishi huyo hupokea kwa mwaka?
+Swali la ishirini na moja. Ndani ya pakiti moja kuna penseli kumi na mbili. Ikiwa penseli moja inagharimu shilingi mia nne hamsini na senti ishirini na tano, je, pakiti nane za penseli za aina hiyo zitagharimu kiasi gani cha fedha?
+Swali la ishirini na mbili. Mkulima aliuza magunia tisini na nane ya mahindi. Ikiwa aliuza kila gunia kwa bei ya shilingi elfu tisini na nane mia tano na senti arobaini na tano, je, alipata jumla ya kiasi gani cha fedha?
+""",
+})
+
 
 def source_text(data_id: str, texts: dict[str, str]) -> str:
     if data_id in PAGE_NARRATION_OVERRIDES:
         return PAGE_NARRATION_OVERRIDES[data_id]
     if data_id in SEMANTIC_PAGE_AUDIO:
         return SEMANTIC_PAGE_AUDIO[data_id]
-    if data_id in ROMAN_READING_ORDER_IDS:
-        value = texts[data_id]
-    else:
-        value = page_source(data_id) or semantic_html_source(data_id) or texts[data_id]
+    # Preserve narration that has already been manually reviewed. Rebuilding
+    # every page from PDF coordinates can scramble equations, tables and
+    # multi-column exercises. Fall back to page extraction only when a text
+    # entry is genuinely absent.
+    value = texts.get(data_id) or page_source(data_id) or semantic_html_source(data_id) or ""
     if data_id == "pg115_gp001_tx001" and "Chunguza mchoro ufuatao." in value:
         value = value.split("Chunguza mchoro ufuatao.", 1)[0]
         value += (
@@ -1651,7 +1845,7 @@ def source_text(data_id: str, texts: dict[str, str]) -> str:
             "Mchoro unaonesha sehemu sawa kuanzia nusu, sehemu moja ya tatu, "
             "robo, hadi sehemu moja ya kumi na mbili."
         )
-    return repair_equation_order(value)
+    return repair_equation_order(clean_existing_narration(value, data_id))
 
 
 async def synthesize(data_id: str, text: str, gate: asyncio.Semaphore):

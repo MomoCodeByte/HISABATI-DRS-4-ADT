@@ -258,13 +258,12 @@
 </ns0:g>
 </ns0:g>
 <ns0:g clip-path="url(#clip_26)">
-<ns0:path transform="matrix(1,0,0,-1,266.5905,693.9859)" d="M0 0C-6.497 0-11.764-5.267-11.764-11.764-11.764-18.261-6.497-23.528 0-23.528H23.819C30.316-23.528 35.583-18.261 35.583-11.764 35.583-5.267 30.316 0 23.819 0Z" fill="#7eba56" />
 </ns0:g>
 <ns0:g clip-path="url(#clip_27)">
 <ns0:g mask="url(#mask_28)">
 <ns0:g>
 <ns0:g clip-path="url(#clip_30)">
-<ns0:path transform="matrix(1,0,0,-1,485.632,681.4722)" d="M0 0H-382.435C-391.824 0-399.435 7.611-399.435 17V600H-17C-7.611 600 0 592.389 0 583Z" fill="#eef4eb" />
+<ns0:path transform="matrix(1,0,0,-1,485.632,681.4722)" d="M0 0H-382.435C-391.824 0-399.435 7.611-399.435 17V600H-17C-7.611 600 0 592.389 0 583Z" fill="#ffffff" />
 <ns0:g mask="url(#mask_31)">
 <ns0:g style="mix-blend-mode:screen">
 <ns0:path transform="matrix(1,0,0,-1,0,767.669)" d="M74.527 693.01H487.087V87.48999H74.527Z" fill="#ffffff" fill-opacity=".75" />
