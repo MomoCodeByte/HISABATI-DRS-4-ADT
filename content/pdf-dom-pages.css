@@ -81,7 +81,7 @@
 .chapter3-long-division,
 .chapter3-short-division {
   position: absolute;
-  z-index: 30;
+  z-index: 100;
   display: inline-flex;
   align-items: baseline;
   height: 19px;
@@ -97,9 +97,13 @@
   white-space: nowrap;
   pointer-events: none;
 }
+.chapter3-long-division {
+  height: 23px;
+  box-shadow: 0 0 0 3px #fff;
+}
 .pdf-dom-text .chapter3-long-division__bracket {
   display: inline-block;
-  margin-right: 1px;
+  margin-right: 0;
   line-height: 16px;
 }
 .pdf-dom-text .chapter3-long-division__dividend {
@@ -110,19 +114,67 @@
   border: 0;
   text-align: center;
 }
-.pdf-dom-text .chapter3-short-division .chapter3-long-division__dividend::after,
+
+/* Njia fupi: kigawanyo kiko nje, mviringo unaungana na mstari wa chini. */
+.pdf-dom-text .chapter3-short-division .chapter3-long-division__bracket {
+  width: 0;
+  margin: 0;
+  overflow: hidden;
+  font-size: 0;
+}
+.pdf-dom-text .chapter3-short-division .chapter3-long-division__dividend {
+  margin-left: 7px;
+  padding: 0 1px 1px 0;
+  border-bottom: 1px solid currentColor;
+}
+.pdf-dom-text .chapter3-short-division .chapter3-long-division__dividend::before {
+  content: "";
+  position: absolute;
+  left: -7px;
+  bottom: -1px;
+  width: 7px;
+  height: 17px;
+  border-left: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  border-bottom-left-radius: 7px;
+  box-sizing: border-box;
+}
+
+/* Njia ndefu: kigawanyo, alama ya ), kisha kigawanye bila mstari. */
+.pdf-dom-text .chapter3-long-division .chapter3-long-division__bracket {
+  display: none;
+  width: 0;
+  height: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  font-size: 0;
+  line-height: 0;
+}
+.pdf-dom-text .chapter3-long-division {
+  align-items: baseline;
+}
+.pdf-dom-text .chapter3-long-division .chapter3-long-division__dividend {
+  position: relative;
+  margin-left: 7px;
+  padding: 4px 4px 0 0;
+  border-top: 1px solid currentColor;
+  box-sizing: border-box;
+}
 .pdf-dom-text .chapter3-long-division .chapter3-long-division__dividend::before {
   content: "";
   position: absolute;
-  left: 0;
-  right: 0;
-  border-top: 1px solid currentColor;
+  left: -7px;
+  top: -1px;
+  width: 7px;
+  height: 21px;
+  border-left: 1.25px solid currentColor;
+  border-top: 1.25px solid currentColor;
+  border-top-left-radius: 0;
+  box-sizing: border-box;
 }
-.pdf-dom-text .chapter3-short-division .chapter3-long-division__dividend::after {
-  bottom: -2px;
-}
-.pdf-dom-text .chapter3-long-division .chapter3-long-division__dividend::before {
-  top: -2px;
+.pdf-dom-text .chapter3-long-division .chapter3-long-division__dividend::after {
+  content: none;
 }
 .chapter3-inline-division {
   position: absolute;

@@ -53,6 +53,52 @@
 .page-28 .cyan-box { min-height:16.2em; margin-bottom:3.5em; }
 .page-29 .exercise-box { min-height:27.8em; }.page-29 .topic-title { margin-top:2em; }.page-29 .example-one { min-height:6.6em; }
 .page-30 .continuation-box { min-height:17.3em; margin-bottom:3em; }.page-30 .example-two { min-height:25.8em; }
+.page-30 .worked-table th:first-child,
+.page-30 .worked-table td:first-child { width:27%; }
+.page-30 .worked-table td:first-child {
+  padding-left:.25em;
+  padding-right:.25em;
+  text-align:center;
+}
+.page-30 .vertical-sum {
+  display:block;
+  width:100%;
+  max-width:4em;
+  min-width:0;
+  margin:0 auto;
+  font-size:.92em;
+  line-height:1.2;
+  box-sizing:border-box;
+  font-variant-numeric:tabular-nums;
+}
+.page-30 .worked-table .steps {
+  margin-top:.12em;
+  padding-left:1.45em;
+}
+.page-30 .worked-table .steps li {
+  margin:.18em 0;
+  line-height:1.32;
+}
+@media (max-width:700px) {
+  .page-30 .worked-table th:first-child,
+  .page-30 .worked-table td:first-child { width:29%; }
+  .page-30 .worked-table th,
+  .page-30 .worked-table td { padding:.26em .3em; }
+  .page-30 .vertical-sum { font-size:.88em; }
+  .page-30 .worked-table .steps {
+    padding-left:1.3em;
+    font-size:.94em;
+  }
+}
+@media (max-width:440px) {
+  .page-30 .worked-table th:first-child,
+  .page-30 .worked-table td:first-child { width:31%; }
+  .page-30 .vertical-sum { font-size:.84em; }
+  .page-30 .worked-table .steps {
+    padding-left:1.2em;
+    font-size:.9em;
+  }
+}
 .page-31 .example-three { min-height:38.5em; }
 .page-32 .exercise-box { min-height:42.5em; }
 .page-33 .example-one { min-height:21.2em; }.page-33 .example-two { min-height:17.4em; }
@@ -60,6 +106,53 @@
 .page-35 .example-one { min-height:41.8em; }
 .page-36 .lattice-intro { padding:0 1.1em 1em; margin-bottom:2.7em; border:1px solid #00a8b144; }.page-36 .example-two { min-height:31.5em; }
 .page-37 .example-three { min-height:16.2em; }.page-37 .example-four { min-height:16.4em; }.page-37 .exercise-box { min-height:7em; }
-.page-38 .exercise-continuation { min-height:24.2em; margin-bottom:1.7em; border:1px solid #ed287a33; padding:.5em; }.page-38 .word-example { min-height:15em; }
+.page-38 .exercise-continuation {
+  min-height:22.8em;
+  margin-bottom:1.45em;
+  border:1px solid #ed287a33;
+  padding:.65em .55em .45em;
+}
+.page-38 .exercise-grid {
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:1.05em .8em;
+  padding:.25em .35em .55em;
+}
+.page-38 .exercise-grid .item {
+  grid-template-columns:1.6em minmax(0,1fr);
+  min-width:0;
+  min-height:2.35em;
+}
+.page-38 .exercise-grid .item > span:last-child { min-width:0; }
+.page-38 .exercise-grid .item > span:last-child:not(.stack) {
+  white-space:nowrap;
+  font-size:.92em;
+  letter-spacing:-.015em;
+}
+.page-38 .exercise-grid .stack {
+  display:block;
+  width:100%;
+  max-width:4.8em;
+  min-width:0;
+  justify-self:start;
+  font-variant-numeric:tabular-nums;
+}
+.page-38 .topic-title {
+  margin:.25em 0 .7em;
+  line-height:1.3;
+}
+.page-38 .word-example { min-height:15em; }
+.page-38 .word-example .box-body {
+  padding:.35em .8em .7em;
+  line-height:1.42;
+}
+@media (max-width:700px) {
+  .page-38 .exercise-grid {
+    gap:.9em .55em;
+    padding-left:.2em;
+    padding-right:.2em;
+  }
+  .page-38 .exercise-grid .item { grid-template-columns:1.45em minmax(0,1fr); }
+  .page-38 .exercise-grid .item > span:last-child:not(.stack) { font-size:.86em; }
+}
 .page-39 .word-example { min-height:22.2em; }.page-39 .exercise-box { min-height:20.6em; }
 .page-40 .exercise-continuation { min-height:18em; margin-bottom:1.45em; border:1px solid #ed287a22; padding:.5em; }.page-40 .activity-green { min-height:9em; margin-bottom:1.8em; }.page-40 .remember-box { min-height:12em; }

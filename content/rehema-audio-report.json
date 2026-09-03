@@ -1,8 +1,8 @@
 {
   "voice": "sw-TZ-RehemaNeural",
   "rate": "-30%",
-  "version": "v40",
-  "audioFiles": 293,
-  "regeneratedAudioFiles": 293,
+  "version": "v112",
+  "audioFiles": 4,
+  "regeneratedAudioFiles": 1,
   "spatialPageNarration": true
 }

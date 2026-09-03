@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 LOCALE = ROOT / "content" / "i18n" / "sw-TZ"
 VOICE = "sw-TZ-RehemaNeural"
 RATE = "-30%"
-VERSION = "v40"
+VERSION = "v112"
 
 ONES = ("sifuri", "moja", "mbili", "tatu", "nne", "tano", "sita", "saba", "nane", "tisa")
 TENS = {10: "kumi", 20: "ishirini", 30: "thelathini", 40: "arobaini",
@@ -370,6 +370,51 @@ def clean_existing_narration(value: str, data_id: str = "") -> str:
     """Repair speech text without changing any visible textbook content."""
     value = html.unescape(value).replace("\x07", " ")
 
+    # Use fluent cardinal numbering when introducing questions and recap items.
+    ordinal_question_pages = {
+        "pg039_gp001_tx001",
+        "pg041_gp001_tx001",
+    }
+    use_ordinal_questions = data_id in ordinal_question_pages
+    if data_id == "pg041_gp001_tx001":
+        question_ordinals = {
+            1: "kwanza", 2: "pili", 3: "tatu", 4: "nne", 5: "tano",
+            6: "sita", 7: "saba", 8: "nane", 9: "tisa", 10: "kumi",
+            11: "kumi na moja", 12: "kumi na mbili", 13: "kumi na tatu",
+            14: "kumi na nne", 15: "kumi na tano", 16: "kumi na sita",
+            17: "kumi na saba", 18: "kumi na nane", 19: "kumi na tisa",
+            20: "ishirini", 21: "ishirini na moja", 22: "ishirini na mbili",
+            23: "ishirini na tatu", 24: "ishirini na nne", 25: "ishirini na tano",
+        }
+        for question_number, ordinal in question_ordinals.items():
+            value = re.sub(
+                rf"\bSwali la {question_number}\b",
+                f"Swali la {ordinal}",
+                value,
+                flags=re.I,
+            )
+    if not use_ordinal_questions:
+        value = re.sub(r"\bSwali la\s+(?=\d)", "Swali namba ", value, flags=re.I)
+    ordinal_to_cardinal = {
+        "kwanza": "moja", "pili": "mbili", "tatu": "tatu", "nne": "nne",
+        "tano": "tano", "sita": "sita", "saba": "saba", "nane": "nane",
+        "tisa": "tisa", "kumi": "kumi",
+    }
+    for ordinal, cardinal in ordinal_to_cardinal.items():
+        if not use_ordinal_questions:
+            value = re.sub(
+                rf"\bSwali la {ordinal}\b",
+                f"Swali namba {cardinal}",
+                value,
+                flags=re.I,
+            )
+        value = re.sub(
+            rf"\bNamba ya {ordinal}\b",
+            f"Namba {cardinal}",
+            value,
+            flags=re.I,
+        )
+
     # PDF line breaks sometimes became full stops in the middle of a phrase.
     joiners = (
         r"ya|wa|na|kwa|katika|ili|kisha|ambayo|ambalo|ambazo|yenye|zenye|"
@@ -723,7 +768,7 @@ def spoken(value: str, data_id: str = "") -> str:
     # Pronounce squared and cubed metric units before plain unit abbreviations.
     for area_unit, area_name in (
         ("km", "kilometa za mraba"),
-        ("m", "meta za mraba"),
+        ("m", "meta skweya"),
         ("sm", "sentimeta za mraba"),
         ("mm", "milimeta za mraba"),
     ):
@@ -1473,34 +1518,34 @@ Swali che na swali de yanaendelea.
 """,
     "pg019_gp001_tx001": """
 Mfano wa pili unaendelea.
-Njia.
-Swali che. Hamsini na saba sawa sawa na hamsini jumlisha saba, sawa sawa na eli vi ai ai.
-Swali de. Themanini na nane sawa sawa na themanini jumlisha nane, sawa sawa na eli eksi eksi eksi vi ai ai ai.
+Kipengele che. Hamsini na saba ni sawa na namba ya Kirumi eli, jumlisha namba ya Kirumi vi ai ai. Ni sawa na namba ya Kirumi eli vi ai ai. Kwa hiyo, hamsini na saba ni namba ya Kirumi eli vi ai ai.
+Kipengele de. Themanini na nane ni sawa na namba ya Kirumi eli eksi eksi eksi, jumlisha namba ya Kirumi vi ai ai ai. Ni sawa na namba ya Kirumi eli eksi eksi eksi vi ai ai ai. Kwa hiyo, themanini na nane ni namba ya Kirumi eli eksi eksi eksi vi ai ai ai.
 Zoezi la tano.
-Swali la kwanza. Andika namba hizi za Kirumi kwa maneno: eli eksi vi ai ai; eksi si; eli eksi eksi eksi ai ai; na eksi si vi ai ai ai.
-Swali la pili. Andika namba hizi kwa namba za Kirumi: hamsini na mbili, sitini na sita, sabini, na tisini na tatu.
-Swali la tatu. Panga namba hizi za Kirumi kuanzia ndogo hadi kubwa: si; ai; eksi; eli; vi; eli eksi vi; eli eksi eksi eksi vi; eksi si vi; eli vi; na eli eksi eksi vi.
-Swali la nne. Jaza nafasi zilizo wazi: eli eksi eksi eksi, nafasi wazi, eli eksi eksi eksi ai ai, nafasi wazi, eli eksi eksi eksi ai vi, nafasi wazi.
-Namba za Kirumi mia moja hadi mia tano.
-Alama si ina samani ya mia moja, na alama di ina samani ya mia tano.
-Alama si inaweza kurudiwa hadi mara tatu kuonesha mia moja, mia mbili, na mia tatu. Alama si ikiwekwa kushoto mwa di, samani ya si hutolewa kutoka kwa di. Kwa hiyo, si di ni mia nne.
-Mifano ni si di, di si si, na di si si si.
+Swali la kwanza. Andika namba zifuatazo kwa maneno. Kipengele aa, namba ya Kirumi eli eksi vi ai ai. Kipengele be, namba ya Kirumi eksi si. Kipengele che, namba ya Kirumi eli eksi eksi eksi ai ai. Kipengele de, namba ya Kirumi eksi si vi ai ai ai.
+Swali la pili. Andika namba zifuatazo kwa Kirumi. Kipengele aa, hamsini na mbili. Kipengele be, sitini na sita. Kipengele che, sabini. Kipengele de, tisini na tatu.
+Swali la tatu. Andika namba zifuatazo kuanzia namba yenye thamani ndogo hadi kubwa. Namba za Kirumi ni: si; ai; eksi; eli; vi; eli eksi vi; eli eksi eksi eksi vi; eksi si vi; eli vi; na eli eksi eksi vi.
+Swali la nne. Andika namba za Kirumi zinazokosekana katika mfululizo wa namba zifuatazo. Eli eksi eksi eksi, nafasi wazi; eli eksi eksi eksi ai ai, nafasi wazi; eli eksi eksi eksi ai vi, nafasi wazi.
+Namba za Kirumi si hadi di. Namba si na di ni namba pekee za Kirumi zinazowakilishwa na mamia. Namba si huwakilisha mia moja na namba di huwakilisha mia tano. Namba si ikiwa kushoto mwa di, thamani yake hupungua kutoka kwa namba di; na ikiwa kulia mwa di, thamani yake inaongezwa kwa di. Namba si ikiwa kushoto mwa di lazima iwe moja, na ikiwa kulia mwa di zisizidi tatu.
+Kwa mfano: kipengele aa, si di; kipengele be, di si si; kipengele che, di si si si.
 """,
     "pg020_gp001_tx001": """
-Namba za Kirumi mia moja hadi mia tano zinaendelea.
-Jedwali la kwanza lina safu tatu: numerali, namba ya Kirumi, na namba kwa maneno.
-Mia moja ni si. Mia mbili ni si si. Mia tatu ni si si si. Mia nne ni si di. Mia tano ni di.
-Jedwali la pili lina mifano kumi ya namba za Kirumi na numerali zake.
-Si ai vi ni mia moja na nne.
-Si eksi ai eksi ni mia moja na kumi na tisa.
-Si eli eksi eksi vi ai ni mia moja sabini na sita.
-Si si eksi eksi ai ai ni mia mbili ishirini na mbili.
-Si si si eksi eli ai ai ai ni mia tatu arobaini na tatu.
-Si si eksi eksi vi ni mia mbili ishirini na tano.
-Si si si eksi eksi eksi vi ai ai ai ni mia tatu thelathini na nane.
-Si di eksi vi ai ai ni mia nne kumi na saba.
-Si si eli ai vi ni mia mbili hamsini na nne.
-Si di eksi eksi eksi ai ni mia nne thelathini na moja.
+Ukurasa wa 20. Soma namba zifuatazo. Jedwali la kwanza.
+Safu ya kwanza. Numerali mia moja. Namba kwa Kirumi, si. Namba kwa maneno, mia moja.
+Safu ya pili. Numerali mia mbili. Namba kwa Kirumi, si si. Namba kwa maneno, mia mbili.
+Safu ya tatu. Numerali mia tatu. Namba kwa Kirumi, si si si. Namba kwa maneno, mia tatu.
+Safu ya nne. Numerali mia nne. Namba kwa Kirumi, si di. Namba kwa maneno, mia nne.
+Safu ya tano. Numerali mia tano. Namba kwa Kirumi, di. Namba kwa maneno, mia tano.
+Soma namba zifuatazo. Jedwali la pili lina safu tatu: Namba kwa Kirumi, Namba kwa maneno, na Numerali.
+Mstari wa kwanza. Namba kwa Kirumi, si ai vi. Namba kwa maneno, mia moja na nne. Numerali, mia moja na nne.
+Mstari wa pili. Namba kwa Kirumi, si eksi ai eksi. Namba kwa maneno, mia moja kumi na tisa. Numerali, mia moja kumi na tisa.
+Mstari wa tatu. Namba kwa Kirumi, si eli eksi eksi vi ai. Namba kwa maneno, mia moja sabini na sita. Numerali, mia moja sabini na sita.
+Mstari wa nne. Namba kwa Kirumi, si si eksi eksi ai ai. Namba kwa maneno, mia mbili ishiri na mbili. Numerali, mia mbili ishirini na mbili.
+Mstari wa tano. Namba kwa Kirumi, si si si eksi eli ai ai ai. Namba kwa maneno, mia tatu arobaini na tatu. Numerali, mia tatu arobaini na tatu.
+Mstari wa sita. Namba kwa Kirumi, si si eksi eksi vi. Namba kwa maneno, mia mbili ishirini na tano. Numerali, mia mbili ishirini na tano.
+Mstari wa saba. Namba kwa Kirumi, si si si eksi eksi eksi vi ai ai ai. Namba kwa maneno, mia tatu thelathini na nane. Numerali, mia tatu thelathini na nane.
+Mstari wa nane. Namba kwa Kirumi, si di eksi vi ai ai. Namba kwa maneno, mia nne kumi na saba. Numerali, mia nne kumi na saba.
+Mstari wa tisa. Namba kwa Kirumi, si si eli ai vi. Namba kwa maneno, mia mbili hamsini na nne. Numerali, mia mbili hamsini na nne.
+Mstari wa kumi. Namba kwa Kirumi, si di eksi eksi eksi ai. Namba kwa maneno, mia nne thelathini na moja. Numerali, mia nne thelathini na moja.
 """,
     "pg021_gp001_tx001": """
 Mfano wa kwanza. Andika namba mia mbili na tano, na mia tatu sitini na mbili, kwa namba za Kirumi.
@@ -1759,76 +1804,87 @@ Mfano wa nne. Mia tatu themanini na nne gawanya kwa kumi na mbili sawa sawa na t
 Njia. Hatua ya kwanza. Gawanya tatu kwa kumi na mbili, haitoshelezi. Hivyo, chukua thelathini na nane gawanya kwa kumi na mbili, unapata tatu baki mbili. Andika tatu katika nafasi ya makumi.
 """,
     "pg106_gp001_tx001": """
-Katika Kazi ya kufanya ya pili umejifunza kuwa eneo la pembetatu linapatikana kwa kuhesabu idadi ya miraba midogo. Hivyo, eneo la pembetatu hupatikana kwa kuchukua nusu ya eneo la mraba au mstatili.
-Kwa hiyo, eneo la pembetatu sawa sawa na nusu zidisha kwa kitako zidisha kwa kimo.
-Mfano wa kwanza. Tafuta eneo la pembetatu pe ku re.
-Mchoro unaonesha pembetatu pe ku re yenye kitako ku re cha sentimeta kumi na kimo ku pe cha sentimeta saba.
-Njia. Kitako ku re sawa sawa na sentimeta kumi. Kimo ku pe sawa sawa na sentimeta saba.
-Eneo la pembetatu sawa sawa na nusu zidisha kwa kitako zidisha kwa kimo.
-Sawa sawa na nusu zidisha kwa sentimeta kumi zidisha kwa sentimeta saba.
-Sawa sawa na sentimeta za mraba thelathini na tano.
-Kwa hiyo, eneo la pembetatu pe ku re ni sentimeta za mraba thelathini na tano.
+Katika Kazi ya kufanya ya pili umejifunza kuwa eneo la pembetatu linapatikana kwa kuhesabu idadi ya miraba midogo. Hivyo, eneo la pembetatu hupatikana kwa kuchukua nusu ya eneo la mraba au mstatili. Kwa hiyo, eneo la pembetatu ni sawa na nusu zidisha kwa kitako zidisha kwa kimo. Mfano wa kwanza. Tafuta eneo la pembetatu pi, kyu, aa. Maelezo ya mchoro. Mchoro unaonyesha pembetatu pi, kyu, aa. Herufi pi iko juu kushoto, kyu iko chini kushoto, na aa iko chini kulia. Upande kyu, pi umesimama wima na ndio kimo. Upande kyu, aa umelala kwa mlalo na ndio kitako. Upande pi, aa ni mstari wa mteremko unaofunga pembetatu. Alama ndogo ya mraba kwenye kona ya kyu inaonyesha pembe ya nyuzi 90 kati ya kimo na kitako. Kimo kyu, pi kina urefu wa sentimeta 7, na kitako kyu, aa kina urefu wa sentimeta 10. Njia. Kitako kyu, aa ni sawa na sentimeta 10. Kimo kyu, pi ni sawa na sentimeta 7. Eneo la pembetatu ni sawa na nusu zidisha kwa kitako zidisha kwa kimo. Ni sawa na nusu zidisha kwa sentimeta 10 zidisha kwa sentimeta 7. Ni sawa na sentimeta skwea 35. Kwa hiyo, eneo la pembetatu pi, kyu, aa ni sentimeta skwea 35.
 """,
     "pg107_gp001_tx001": """
-Mfano wa pili. Ikiwa kimo cha pembetatu ni meta kumi na tano na kitako chake ni meta thelathini, tafuta eneo la pembetatu.
-Njia. Kimo cha pembetatu sawa sawa na meta kumi na tano. Kitako cha pembetatu sawa sawa na meta thelathini.
-Eneo la pembetatu sawa sawa na nusu zidisha kwa kitako zidisha kwa kimo.
-Sawa sawa na nusu zidisha kwa meta thelathini zidisha kwa meta kumi na tano.
-Sawa sawa na meta za mraba mia mbili ishirini na tano.
-Kwa hiyo, eneo la pembetatu ni meta za mraba mia mbili ishirini na tano.
-Mfano wa tatu. Tafuta eneo la pembetatu ke le me.
-Mchoro unaonesha pembetatu ke le me yenye kitako ke me cha sentimeta ishirini na sita na kimo cha sentimeta kumi na mbili.
-Njia. Kitako ke me sawa sawa na sentimeta ishirini na sita. Kimo sawa sawa na sentimeta kumi na mbili.
-Eneo la pembetatu ke le me sawa sawa na nusu zidisha kwa kitako zidisha kwa kimo.
-Sawa sawa na nusu zidisha kwa sentimeta ishirini na sita zidisha kwa sentimeta kumi na mbili.
+Mfano wa pili. Ikiwa kimo cha pembetatu ni meta 15 na kitako chake ni meta 30, tafuta eneo la pembetatu. Njia. Kimo cha pembetatu ni sawa na meta 15. Kitako cha pembetatu ni sawa na meta 30. Eneo la pembetatu ni sawa na nusu zidisha kwa kitako zidisha kwa kimo. Ni sawa na nusu zidisha kwa meta 30 zidisha kwa meta 15. Ni sawa na meta skweya 225. Kwa hiyo, eneo la pembetatu ni meta skweya 225. Mfano wa tatu. Tafuta eneo la pembetatu kei, eli, emu. Maelezo ya mchoro. Mchoro unaonyesha pembetatu kei, eli, emu. Herufi kei iko chini kushoto, emu iko chini kulia, na eli iko juu. Mstari wa kimo unatoka eli hadi eni kwenye kitako. Kitako kei, emu kina urefu wa sentimeta 26, na kimo eli, eni kina urefu wa sentimeta 12. Njia. Kitako kei, emu ni sawa na sentimeta 26. Kimo eli, eni ni sawa na sentimeta 12. Eneo la pembetatu kei, eli, emu ni sawa na nusu zidisha kwa kitako zidisha kwa kimo. Ni sawa na nusu zidisha kwa sentimeta 26 zidisha kwa sentimeta 12.
 """,
     "pg108_gp001_tx001": """
-Mfano wa tatu unaendelea. Sentimeta ishirini na sita zidisha kwa sentimeta kumi na mbili, kisha gawanya kwa mbili, sawa sawa na sentimeta za mraba mia moja hamsini na sita.
-Kwa hiyo, eneo la pembetatu ke le me ni sentimeta za mraba mia moja hamsini na sita.
-Zoezi la tatu.
-Swali la kwanza. Tafuta eneo la kila umbo katika maumbo yafuatayo.
-Kipengele aa. Pembetatu aa be che ina kitako de che cha sentimeta kumi na nane na kimo be de cha sentimeta kumi na nne.
-Kipengele be. Pembetatu ze le me ina kitako ze le cha sentimeta ishirini na nne na kimo cha sentimeta kumi na tisa.
-Kipengele che. Pembetatu re se te ina kitako re se cha meta kumi na kimo re te cha meta kumi.
-Kipengele de. Pembetatu emu ne le ina kitako emu le cha sentimeta tano na kimo cha sentimeta ishirini.
-Swali la pili. Uso wa meza ya pembetatu una kimo cha meta sita na kitako cha meta tatu. Tafuta eneo la meza hiyo.
-Swali la tatu. Tafuta eneo la alama ya barabarani yenye umbo la pembetatu, ikiwa kitako chake ni sentimeta arobaini na kimo chake ni sentimeta hamsini na tano.
+Mfano wa tatu unaendelea. Sentimeta 26 zidisha kwa sentimeta 12, kisha gawanya kwa 2. Sentimeta 26 zidisha kwa sentimeta 12 ni sentimeta skwea 312. Sentimeta skwea 312 gawanya kwa 2 ni sentimeta skwea 156. Kwa hiyo, eneo la pembetatu kei, eli, emu ni sentimeta skwea 156. Zoezi la tatu. Swali la kwanza. Tafuta eneo la kila umbo katika maumbo yafuatayo. Kipengele aa. Maelezo ya mchoro. Kuna pembetatu bi, di, si. Herufi bi iko juu kushoto, di iko chini kushoto, na si iko chini kulia. Upande bi, di umesimama wima na una urefu wa sentimeta 14. Upande di, si umelala kwa mlalo na una urefu wa sentimeta 18. Alama ya mraba kwenye kona ya di inaonyesha pembe ya nyuzi 90. Hivyo, kitako di, si ni sentimeta 18 na kimo bi, di ni sentimeta 14. Kipengele be. Maelezo ya mchoro. Kuna pembetatu zedi, eli, emu iliyogeuzwa kuelekea chini. Herufi zedi iko juu kushoto, eli iko juu kulia, na emu iko chini katikati. Upande zedi, eli ni kitako cha juu chenye urefu wa sentimeta 24. Mstari wa nukta kutoka kwenye kitako hadi emu ni kimo cha sentimeta 19, na una alama ya pembe ya nyuzi 90. Kipengele se. Maelezo ya mchoro. Kuna pembetatu aa, esi, ti. Herufi aa iko juu kushoto, esi iko juu kulia, na ti iko chini kushoto. Upande aa, esi umelala kwa mlalo na una urefu wa meta 10. Upande aa, ti umesimama wima na una urefu wa meta 10. Alama ya mraba kwenye kona ya aa inaonyesha pembe ya nyuzi 90. Kipengele de. Maelezo ya mchoro. Kuna pembetatu emu, eli, eni inayochongoka upande wa kulia. Herufi emu iko juu kushoto, eli iko chini kushoto, na eni iko upande wa kulia. Upande emu, eli umesimama wima na una urefu wa sentimeta 5. Mstari wa mlalo kutoka upande emu, eli hadi eni ni kimo cha sentimeta 20 na una alama ya pembe ya nyuzi 90. Swali la pili. Uso wa meza ya pembetatu una kimo cha meta 6 na kitako cha meta 3. Tafuta eneo la meza hiyo. Swali la tatu. Tafuta eneo la alama ya barabarani yenye umbo la pembetatu, ikiwa kitako chake ni sentimeta 40 na kimo chake ni sentimeta 55.
 """,
     "pg183_gp001_tx001": """
 Kazi ya kufanya. Kujifunza miamala ya fedha ya Tanzania kwa njia ya masomo ya mtandaoni.
-Maelezo. Tumia huduma na masomo ya mtandaoni kujifunza zaidi jinsi ya kufanya miamala ya fedha ya Tanzania inayohusu kuzidisha na kugawanya fedha.
-Jikumbushe. Moja. Unapotenga shilingi na senti katika tarakimu, senti huandikwa kwa tarakimu mbili. Mbili. Kuzidisha fedha, anza na senti kisha shilingi. Tatu. Unapogawanya fedha, anza na shilingi kisha senti.
+
+Maelezo. Tumia huduma na masomo ya mtandaoni kujifunza zaidi namna ya kuzidisha na kugawanya fedha ya Tanzania.
+
+Jikumbushe mambo matatu. Kwanza, unapotenga shilingi na senti katika tarakimu, senti huandikwa kwa tarakimu mbili. Pili, unapozidisha fedha, anza na senti kisha shilingi. Tatu, unapogawanya fedha, anza na shilingi kisha senti.
+
 Zoezi la marudio.
-Swali la kwanza. Shilingi mia saba sitini na nne zidisha kwa sita.
-Swali la pili. Shilingi elfu tano mia sita sabini na tano na senti thelathini na tisa zidisha kwa nane.
-Swali la tatu. Shilingi mia moja tisini na senti tisini zidisha kwa tisa.
-Swali la nne. Shilingi elfu arobaini na tano mia tatu thelathini na senti themanini zidisha kwa ishirini na nane.
-Swali la tano. Shilingi elfu tatu mia tano zidisha kwa tisa.
-Swali la sita. Shilingi elfu thelathini na tisa mia nane hamsini na senti sabini na saba zidisha kwa sabini na tisa.
-Swali la saba. Shilingi mia moja tisini na nane na senti tisini na sita zidisha kwa sitini na tisa.
+
+Swali la kwanza. Shilingi mia saba sitini na nne mara sita.
+
+Swali la pili. Shilingi elfu tano mia sita sabini na tano na senti thelathini na tisa mara nane.
+
+Swali la tatu. Shilingi mia moja tisini na senti tisini mara tisa.
+
+Swali la nne. Shilingi elfu arobaini na tano mia tatu thelathini na senti themanini mara ishirini na nane.
+
+Swali la tano. Shilingi elfu tatu mia tano mara tisa.
+
+Swali la sita. Shilingi elfu thelathini na tisa mia nane hamsini na senti sabini na saba mara sabini na tisa.
+
+Swali la saba. Shilingi mia moja tisini na nane na senti tisini na sita mara sitini na tisa.
+
 Swali la nane. Shilingi elfu sitini na saba mia sita sabini na nane na senti hamsini na mbili gawanya kwa ishirini na sita.
+
 Swali la tisa. Shilingi elfu arobaini na tano mia tatu sitini na senti tisini na sita gawanya kwa sita.
 """,
     "pg184_gp001_tx001": """
 Zoezi la marudio linaendelea.
-Swali la kumi. Shilingi elfu kumi na mbili mia nne gawanya kwa nne.
-Swali la kumi na moja. Shilingi elfu sabini na tano mia tano gawanya kwa ishirini.
-Swali la kumi na mbili. Shilingi elfu arobaini na nne mia mbili themanini na nne na senti kumi na nne gawanya kwa kumi na nane.
-Swali la kumi na tatu. Shilingi elfu tisini na tano mia nne sitini na senti thelathini na saba gawanya kwa kumi na tisa.
-Swali la kumi na nne. Shilingi elfu saba mia sita hamsini na tatu na senti sitini na mbili gawanya kwa kumi na tatu.
-Swali la kumi na tano. Shilingi elfu kumi na tisa na saba na senti sitini na sita gawanya kwa kumi na nne.
-Swali la kumi na sita. Daftari moja linauzwa kwa bei ya shilingi mia tano na senti thelathini. Je, ni kiasi gani cha fedha kinahitajika kununua madaftari nane ya aina hiyo?
-Swali la kumi na saba. Mpira unauzwa kwa bei ya shilingi elfu nane na senti ishirini na tano. Itagharimu kiasi gani cha fedha kununua mipira minne ya aina hiyo?
-Swali la kumi na nane. Kiasi cha shilingi elfu moja mia mbili na senti sabini na tano kilitumika kununua kalamu tatu zenye bei sawa. Je, kalamu moja iliuzwa kwa shilingi ngapi?
-Swali la kumi na tisa. Mwanafunzi alinunua madaftari tisa kwa shilingi elfu moja mia nane na tisa na senti arobaini na tano. Je, daftari moja liligharimu kiasi gani cha fedha ikiwa madaftari yote yalinunuliwa kwa bei sawa?
-Swali la ishirini. Mshahara wa mtumishi ni shilingi laki saba na elfu sabini na tano mia tatu hamsini na tano na senti ishirini na tatu kwa mwezi. Ni kiasi gani cha mshahara mtumishi huyo hupokea kwa mwaka?
-Swali la ishirini na moja. Ndani ya pakiti moja kuna penseli kumi na mbili. Ikiwa penseli moja inagharimu shilingi mia nne hamsini na senti ishirini na tano, je, pakiti nane za penseli za aina hiyo zitagharimu kiasi gani cha fedha?
-Swali la ishirini na mbili. Mkulima aliuza magunia tisini na nane ya mahindi. Ikiwa aliuza kila gunia kwa bei ya shilingi elfu tisini na nane mia tano na senti arobaini na tano, je, alipata jumla ya kiasi gani cha fedha?
+
+Swali namba kumi. Shilingi elfu kumi na mbili mia nne gawanya kwa nne.
+
+Swali namba kumi na moja. Shilingi elfu sabini na tano mia tano gawanya kwa ishirini.
+
+Swali namba kumi na mbili. Shilingi elfu arobaini na nne mia mbili themanini na nne na senti kumi na nne gawanya kwa kumi na nane.
+
+Swali namba kumi na tatu. Shilingi elfu tisini na tano mia nne sitini na senti thelathini na saba gawanya kwa kumi na tisa.
+
+Swali namba kumi na nne. Shilingi elfu saba mia sita hamsini na tatu na senti sitini na mbili gawanya kwa kumi na tatu.
+
+Swali namba kumi na tano. Shilingi elfu kumi na tisa na saba na senti sitini na sita gawanya kwa kumi na nne.
+
+Swali namba kumi na sita. Daftari moja linauzwa kwa bei ya shilingi mia tano na senti thelathini. Je, ni kiasi gani cha fedha kinachohitajika kununua madaftari nane ya aina hiyo?
+
+Swali namba kumi na saba. Mpira unauzwa kwa bei ya shilingi elfu nane na senti ishirini na tano. Itagharimu kiasi gani cha fedha kununua mipira minne ya aina hiyo?
+
+Swali namba kumi na nane. Kiasi cha shilingi elfu moja mia mbili na senti sabini na tano kilitumika kununua kalamu tatu zenye bei sawa. Je, kalamu moja iliuzwa kwa shilingi ngapi?
+
+Swali namba kumi na tisa. Mwanafunzi alinunua madaftari tisa kwa shilingi elfu moja mia nane na tisa na senti arobaini na tano. Je, daftari moja liligharimu kiasi gani cha fedha ikiwa madaftari yote yalinunuliwa kwa bei sawa?
+
+Swali namba ishirini. Mshahara wa mtumishi ni shilingi laki saba sabini na tano elfu mia tatu hamsini na tano na senti ishirini na tatu kwa mwezi. Ni kiasi gani cha mshahara mtumishi huyo hupokea kwa mwaka?
+
+Swali namba ishirini na moja. Ndani ya pakiti moja kuna penseli kumi na mbili. Ikiwa penseli moja inagharimu shilingi mia nne hamsini na senti ishirini na tano, je, pakiti nane za penseli za aina hiyo zitagharimu kiasi gani cha fedha?
+
+Swali namba ishirini na mbili. Mkulima aliuza magunia tisini na nane ya mahindi. Ikiwa aliuza kila gunia kwa bei ya shilingi elfu tisini na nane mia tano na senti arobaini na tano, je, alipata jumla ya kiasi gani cha fedha?
 """,
 })
 
 
 def source_text(data_id: str, texts: dict[str, str]) -> str:
+    page_match = re.fullmatch(r"pg(\d{3})_gp001_tx001", data_id)
+    page_number = int(page_match.group(1)) if page_match else 0
+    if 1 <= page_number <= 185:
+        page = ROOT / ("index.html" if page_number == 1 else f"pg{page_number:03d}_sec001.html")
+        source = page.read_text(encoding="utf-8")
+        hook = re.search(
+            r'<div class="page-narration-hook"[^>]*>(.*?)</div>',
+            source,
+            re.S,
+        )
+        if hook:
+            narration = html.unescape(re.sub(r"<[^>]+>", "", hook.group(1)))
+            return re.sub(r"\s+", " ", narration).strip()
     if data_id in PAGE_NARRATION_OVERRIDES:
         return PAGE_NARRATION_OVERRIDES[data_id]
     if data_id in SEMANTIC_PAGE_AUDIO:
@@ -1948,6 +2004,31 @@ if __name__ == "__main__":
         sys.path.insert(0, str(dependency))
     import edge_tts
     main()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
